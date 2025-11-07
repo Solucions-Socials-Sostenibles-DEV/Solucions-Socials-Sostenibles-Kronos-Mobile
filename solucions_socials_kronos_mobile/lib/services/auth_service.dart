@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/logger.dart';
 
 class AuthService {
   AuthService(this._client);
@@ -48,15 +49,30 @@ class AuthService {
   Session? get currentSession => _client.auth.currentSession;
 
   Future<String?> _resolveEmailForUsername(String username) async {
+    // 0) Intentar RPC si existe (recomendado por RLS)
+    try {
+      final dynamic result = await _client.rpc(
+        'resolve_email_for_username',
+        params: <String, dynamic>{'p_username': username},
+      );
+      if (result is String && result.contains('@')) {
+        Logger.d('Email resuelto vía RPC para usuario "$username"');
+        return result;
+      }
+    } catch (_) {
+      // Si no existe la función o no hay permisos, seguimos con consultas directas
+    }
+
     const List<String> candidateTables = <String>[
-      'profiles',
       'user_profiles',
+      'profiles',
       'users',
     ];
     const List<String> candidateUsernameColumns = <String>[
       'username',
       'user',
       'nick',
+      'name',
     ];
 
     for (final String table in candidateTables) {
@@ -65,11 +81,16 @@ class AuthService {
           final List<dynamic> rows = await _client
               .from(table)
               .select('email')
-              .eq(column, username)
+              .ilike(column, username)
               .limit(1);
           if (rows.isNotEmpty) {
             final dynamic value = rows.first['email'];
-            if (value is String && value.contains('@')) return value;
+            if (value is String && value.contains('@')) {
+              Logger.d(
+                'Email resuelto en $table.$column para usuario "$username"',
+              );
+              return value;
+            }
           }
         } catch (_) {
           // Puede fallar por RLS/tabla inexistente; probamos siguiente combinación

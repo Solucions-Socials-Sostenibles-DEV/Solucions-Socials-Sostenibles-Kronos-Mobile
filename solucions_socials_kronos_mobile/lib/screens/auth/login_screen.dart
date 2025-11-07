@@ -51,7 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -99,5 +101,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-
