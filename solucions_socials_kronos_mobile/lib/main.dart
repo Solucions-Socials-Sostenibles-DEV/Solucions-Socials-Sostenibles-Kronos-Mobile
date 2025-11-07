@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/ruta/ruta_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,25 +30,56 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  Session? _session;
+  Map<String, dynamic>? _profile;
+
+  @override
+  void initState() {
+    super.initState();
     final SupabaseClient client = Supabase.instance.client;
-    return StreamBuilder<AuthState>(
-      stream: client.auth.onAuthStateChange,
-      initialData: AuthState(
-        AuthChangeEvent.initialSession,
-        client.auth.currentSession,
-      ),
-      builder: (BuildContext context, AsyncSnapshot<AuthState> snapshot) {
-        final Session? session = snapshot.data?.session ?? client.auth.currentSession;
-        if (session == null) {
-          return const LoginScreen();
-        }
-        return const RutaScreen();
-      },
-    );
+    _session = client.auth.currentSession;
+    _loadProfile();
+    client.auth.onAuthStateChange.listen((AuthState state) async {
+      setState(() => _session = state.session);
+      await _loadProfile();
+    });
+  }
+
+  Future<void> _loadProfile() async {
+    final SupabaseClient client = Supabase.instance.client;
+    final String? userId = client.auth.currentUser?.id;
+    if (userId == null) {
+      setState(() => _profile = null);
+      return;
+    }
+    try {
+      final List<Map<String, dynamic>> rows = await client
+          .from('user_profiles')
+          .select('name, role, onboarding_completed')
+          .eq('id', userId)
+          .limit(1);
+      setState(() => _profile = rows.isNotEmpty ? rows.first : <String, dynamic>{'onboarding_completed': true});
+    } catch (_) {
+      setState(() => _profile = <String, dynamic>{'onboarding_completed': true});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_session == null) return const LoginScreen();
+    if (_profile == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final bool onboardingDone = _profile?['onboarding_completed'] == true;
+    if (!onboardingDone) return const OnboardingScreen();
+    return const RutaScreen();
   }
 }
