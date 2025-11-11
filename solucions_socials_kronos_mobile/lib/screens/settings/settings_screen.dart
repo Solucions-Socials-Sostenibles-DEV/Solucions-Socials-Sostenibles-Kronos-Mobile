@@ -149,6 +149,9 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           // Estado de conexiones (debajo de divisas)
           const _ConnectionsStatusCard(),
+          const SizedBox(height: 16),
+          // Datos de la aplicación
+          _AppInfoCard(isDark: isDark),
         ],
       ),
     );
@@ -180,6 +183,87 @@ class _SettingsCard extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+class _AppInfoCard extends StatelessWidget {
+  const _AppInfoCard({required this.isDark});
+
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF4CAF51);
+    final Color fg = isDark ? Colors.white : Colors.black;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Datos de la aplicación',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            child: Column(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: Text('Versión', style: TextStyle(color: fg)),
+                  subtitle: Text(
+                    '1.0.0',
+                    style: TextStyle(color: fg.withOpacity(0.7)),
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.alternate_email),
+                  title: Text(
+                    'Contacto del desarrollador',
+                    style: TextStyle(color: fg),
+                  ),
+                  subtitle: Text(
+                    'comunicacio@solucionssocials.org',
+                    style: TextStyle(color: fg.withOpacity(0.7)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
