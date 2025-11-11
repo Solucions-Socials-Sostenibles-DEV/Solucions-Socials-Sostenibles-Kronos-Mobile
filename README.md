@@ -164,7 +164,7 @@ MIT
 
 ## 👥 Contribuidores
 
-- Desarrollo: [Tu nombre]
+- Desarrollo: Marc Fernández Messa
 - Desktop App: Brian Bautista
 
 ---
