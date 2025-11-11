@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert' as convert;
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/theme_controller.dart';
 import '../../config/external_services_config.dart';
 
@@ -169,6 +172,9 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           // Datos de la aplicación
           _AppInfoCard(isDark: isDark),
+          const SizedBox(height: 16),
+          // Verificar actualización
+          const _UpdateCard(),
         ],
       ),
     );
@@ -200,6 +206,225 @@ class _SettingsCard extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+class _UpdateCard extends StatefulWidget {
+  const _UpdateCard();
+
+  @override
+  State<_UpdateCard> createState() => _UpdateCardState();
+}
+
+class _UpdateCardState extends State<_UpdateCard> {
+  String? _currentVersion;
+  String? _latestTag;
+  String? _status;
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    setState(() => _currentVersion = info.version);
+  }
+
+  String _buildReleasesUrl() {
+    if (ExternalServicesConfig.githubReleasesUrl.isNotEmpty) {
+      return ExternalServicesConfig.githubReleasesUrl;
+    }
+    if (ExternalServicesConfig.githubOwner.isNotEmpty &&
+        ExternalServicesConfig.githubRepo.isNotEmpty) {
+      return 'https://github.com/${ExternalServicesConfig.githubOwner}/${ExternalServicesConfig.githubRepo}/releases';
+    }
+    return 'https://github.com'; // fallback
+  }
+
+  Future<void> _checkUpdate() async {
+    if (ExternalServicesConfig.githubOwner.isEmpty ||
+        ExternalServicesConfig.githubRepo.isEmpty) {
+      setState(() {
+        _status =
+            'Configura GITHUB_REPO_OWNER y GITHUB_REPO_NAME para verificar actualizaciones.';
+      });
+      return;
+    }
+    setState(() {
+      _checking = true;
+      _status = null;
+    });
+    try {
+      final Uri url = Uri.parse(
+        '${ExternalServicesConfig.githubApiBase}/repos/${ExternalServicesConfig.githubOwner}/${ExternalServicesConfig.githubRepo}/releases/latest',
+      );
+      final http.Response resp = await http
+          .get(
+            url,
+            headers: <String, String>{'Accept': 'application/vnd.github+json'},
+          )
+          .timeout(const Duration(seconds: 10));
+      if (resp.statusCode == 200) {
+        final Map<String, dynamic> data =
+            convert.jsonDecode(resp.body) as Map<String, dynamic>;
+        final String tag = (data['tag_name'] as String?)?.trim() ?? '';
+        setState(() => _latestTag = tag);
+        final String cur = (_currentVersion ?? '').replaceFirst(
+          RegExp(r'^v'),
+          '',
+        );
+        final String latest = tag.replaceFirst(RegExp(r'^v'), '');
+        if (cur.isEmpty || latest.isEmpty) {
+          setState(() => _status = 'No se pudo comparar versiones.');
+        } else {
+          final int cmp = _compareSemver(cur, latest);
+          if (cmp < 0) {
+            setState(() => _status = 'Nueva versión disponible: $tag');
+          } else if (cmp == 0) {
+            setState(() => _status = 'Estás al día (${_currentVersion})');
+          } else {
+            setState(
+              () => _status = 'Versión local superior (${_currentVersion})',
+            );
+          }
+        }
+      } else {
+        setState(
+          () => _status = 'Error al consultar GitHub (${resp.statusCode})',
+        );
+      }
+    } catch (_) {
+      setState(() => _status = 'No se pudo verificar la actualización.');
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  int _compareSemver(String a, String b) {
+    List<int> pa = a
+        .split('.')
+        .map((String s) => int.tryParse(s) ?? 0)
+        .toList();
+    List<int> pb = b
+        .split('.')
+        .map((String s) => int.tryParse(s) ?? 0)
+        .toList();
+    while (pa.length < 3) pa.add(0);
+    while (pb.length < 3) pb.add(0);
+    for (int i = 0; i < 3; i++) {
+      if (pa[i] != pb[i]) return pa[i].compareTo(pb[i]);
+    }
+    return 0;
+  }
+
+  Future<void> _openReleases() async {
+    final String link = _buildReleasesUrl();
+    final Uri uri = Uri.parse(link);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF4CAF51);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+    final String versionText = _currentVersion ?? '—';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Verificar actualización',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: _checking ? null : _checkUpdate,
+                icon: _checking
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.system_update),
+                label: const Text('Verificar'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            leading: const Icon(Icons.info_outline),
+            title: Text('Versión actual', style: TextStyle(color: fg)),
+            subtitle: Text(
+              versionText,
+              style: TextStyle(color: fg.withOpacity(0.7)),
+            ),
+          ),
+          if (_latestTag != null)
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              leading: const Icon(Icons.new_releases_outlined),
+              title: Text(
+                'Última versión en GitHub',
+                style: TextStyle(color: fg),
+              ),
+              subtitle: Text(
+                _latestTag!,
+                style: TextStyle(color: fg.withOpacity(0.7)),
+              ),
+            ),
+          if (_status != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Text(_status!, style: TextStyle(color: fg)),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _openReleases,
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Abrir GitHub'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -53,6 +53,12 @@ dependencies:
   # HTTP para comprobaciones de servicios externos
   http: ^1.2.2
 
+  # Información de la app (versión)
+  package_info_plus: ^8.0.2
+
+  # Abrir enlaces externos (GitHub releases)
+  url_launcher: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
