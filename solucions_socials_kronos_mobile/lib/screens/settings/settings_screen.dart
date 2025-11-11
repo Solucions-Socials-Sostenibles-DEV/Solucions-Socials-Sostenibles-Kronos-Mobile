@@ -31,9 +31,26 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text(
-          'Ajustes',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Ajustes',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Ajustes generales de la aplicación',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
