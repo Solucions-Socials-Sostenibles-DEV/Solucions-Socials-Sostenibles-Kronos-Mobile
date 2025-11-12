@@ -309,9 +309,231 @@ class _UserScreenState extends State<UserScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  // Apartado de cambiar contraseña
+                  _CambiarContrasenaCard(
+                    primary: primary,
+                    isDark: isDark,
+                    fg: fg,
+                  ),
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _CambiarContrasenaCard extends StatefulWidget {
+  const _CambiarContrasenaCard({
+    required this.primary,
+    required this.isDark,
+    required this.fg,
+  });
+
+  final Color primary;
+  final bool isDark;
+  final Color fg;
+
+  @override
+  State<_CambiarContrasenaCard> createState() => _CambiarContrasenaCardState();
+}
+
+class _CambiarContrasenaCardState extends State<_CambiarContrasenaCard> {
+  final TextEditingController _nuevaContrasenaController =
+      TextEditingController();
+  final TextEditingController _confirmarContrasenaController =
+      TextEditingController();
+  bool _mostrarContrasena = false;
+  bool _mostrarConfirmar = false;
+  bool _cambiando = false;
+
+  @override
+  void dispose() {
+    _nuevaContrasenaController.dispose();
+    _confirmarContrasenaController.dispose();
+    super.dispose();
+  }
+
+  void _showSnack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _cambiarContrasena() async {
+    final String nuevaContrasena = _nuevaContrasenaController.text;
+    final String confirmarContrasena = _confirmarContrasenaController.text;
+
+    if (nuevaContrasena.isEmpty) {
+      _showSnack('Por favor, introduce una nueva contraseña');
+      return;
+    }
+
+    if (nuevaContrasena.length < 6) {
+      _showSnack('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    if (nuevaContrasena != confirmarContrasena) {
+      _showSnack('Las contraseñas no coinciden');
+      return;
+    }
+
+    setState(() {
+      _cambiando = true;
+    });
+
+    try {
+      final SupabaseClient client = Supabase.instance.client;
+      await client.auth.updateUser(UserAttributes(password: nuevaContrasena));
+
+      if (mounted) {
+        _showSnack('Contraseña cambiada correctamente');
+        _nuevaContrasenaController.clear();
+        _confirmarContrasenaController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnack('Error al cambiar la contraseña: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _cambiando = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: widget.isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: widget.isDark
+              ? Colors.white10
+              : widget.primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Cambiar Contraseña',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Campo nueva contraseña
+          TextField(
+            controller: _nuevaContrasenaController,
+            obscureText: !_mostrarContrasena,
+            decoration: InputDecoration(
+              labelText: 'Nueva contraseña',
+              hintText: 'Introduce tu nueva contraseña',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: widget.primary, width: 2),
+              ),
+              prefixIcon: const Icon(Icons.lock),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _mostrarContrasena ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _mostrarContrasena = !_mostrarContrasena;
+                  });
+                },
+                tooltip: _mostrarContrasena ? 'Ocultar' : 'Mostrar',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Campo confirmar contraseña
+          TextField(
+            controller: _confirmarContrasenaController,
+            obscureText: !_mostrarConfirmar,
+            decoration: InputDecoration(
+              labelText: 'Confirmar contraseña',
+              hintText: 'Confirma tu nueva contraseña',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: widget.primary, width: 2),
+              ),
+              prefixIcon: const Icon(Icons.lock_outline),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _mostrarConfirmar ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _mostrarConfirmar = !_mostrarConfirmar;
+                  });
+                },
+                tooltip: _mostrarConfirmar ? 'Ocultar' : 'Mostrar',
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Botón cambiar contraseña
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _cambiando ? null : _cambiarContrasena,
+              icon: _cambiando
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.lock_reset),
+              label: Text(_cambiando ? 'Cambiando...' : 'Cambiar Contraseña'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
