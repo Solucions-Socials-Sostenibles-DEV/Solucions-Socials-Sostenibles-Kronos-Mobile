@@ -41,7 +41,19 @@ class _RutaScreenState extends State<RutaScreen> {
             ),
           ),
         ),
-        titleSpacing: 16,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: Image.asset(
+              'assets/images/Logo Minimalist SSS High Opacity.PNG',
+              height: 40,
+              width: 40,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        leadingWidth: 56,
+        titleSpacing: 8,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
