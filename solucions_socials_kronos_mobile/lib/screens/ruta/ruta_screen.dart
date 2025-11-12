@@ -934,6 +934,15 @@ class _PersonalCard extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color fg = isDark ? Colors.white : Colors.black;
 
+    // Calcular el total de horas
+    double totalHoras = 0.0;
+    if (!loading && personal.isNotEmpty) {
+      for (final empleado in personal) {
+        final horas = (empleado['horas'] as num?)?.toDouble() ?? 0.0;
+        totalHoras += horas;
+      }
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -972,6 +981,34 @@ class _PersonalCard extends StatelessWidget {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
+              if (!loading && personal.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.access_time, size: 16, color: primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Total: ${totalHoras.toStringAsFixed(1)}h',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(width: 8),
               IconButton(
                 icon: loading
                     ? const SizedBox(
