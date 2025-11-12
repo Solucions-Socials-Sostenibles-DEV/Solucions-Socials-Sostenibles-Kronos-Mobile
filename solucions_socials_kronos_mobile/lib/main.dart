@@ -5,6 +5,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/ruta/ruta_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/user/user_screen.dart';
 import 'package:provider/provider.dart';
 import 'theme/theme_controller.dart';
 
@@ -122,7 +123,11 @@ class _MainShellState extends State<MainShell> {
 
   static const Color primary = Color(0xFF4CAF51);
 
-  final List<Widget> _pages = const <Widget>[RutaScreen(), SettingsScreen()];
+  final List<Widget> _pages = const <Widget>[
+    RutaScreen(),
+    UserScreen(),
+    SettingsScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +142,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.assignment_outlined),
             selectedIcon: Icon(Icons.assignment),
             label: 'Hoja de Ruta',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Usuario',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
