@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/upload_excel_dialog.dart';
 
 class RutaScreen extends StatefulWidget {
   const RutaScreen({super.key});
@@ -127,7 +128,7 @@ class _RutaScreenState extends State<RutaScreen> {
                       _ActionList(
                         primary: primary,
                         primaryDark: primaryDark,
-                        onTapSubirCsv: () => _showSnack('Subir CSV'),
+                        onTapSubirCsv: _showUploadDialog,
                         onTapEditar: () => _showSnack('Editar'),
                         onTapConfirmar: () =>
                             _showSnack('Confirmar Lista y material'),
@@ -148,6 +149,21 @@ class _RutaScreenState extends State<RutaScreen> {
   void _showSnack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _showUploadDialog() async {
+    final result = await showDialog(
+      context: context,
+      builder: (BuildContext context) => const UploadExcelDialog(),
+    );
+
+    if (result != null) {
+      // El archivo fue subido correctamente
+      // TODO: Aquí puedes actualizar la UI o hacer alguna acción adicional
+      if (mounted) {
+        _showSnack('Archivo procesado correctamente');
+      }
+    }
   }
 }
 
@@ -174,7 +190,7 @@ class _ActionList extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<_ActionItem> items = <_ActionItem>[
       _ActionItem(
-        label: 'Subir CSV',
+        label: 'Subir hoja de ruta',
         icon: Icons.upload_file,
         onTap: onTapSubirCsv,
       ),
