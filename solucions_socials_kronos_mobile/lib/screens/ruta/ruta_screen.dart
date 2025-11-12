@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/auth_service.dart';
+import '../../services/hoja_ruta_service.dart';
 import '../../widgets/upload_excel_dialog.dart';
+import '../../utils/date_formatter.dart';
 
 class RutaScreen extends StatefulWidget {
   const RutaScreen({super.key});
@@ -12,11 +14,41 @@ class RutaScreen extends StatefulWidget {
 
 class _RutaScreenState extends State<RutaScreen> {
   late final AuthService _authService;
+  late final HojaRutaService _hojaRutaService;
+  int _totalHojasRuta = 0;
+  DateTime? _ultimaActualizacion;
+  bool _loadingStats = true;
 
   @override
   void initState() {
     super.initState();
     _authService = AuthService(Supabase.instance.client);
+    _hojaRutaService = HojaRutaService(Supabase.instance.client);
+    _loadEstadisticas();
+  }
+
+  Future<void> _loadEstadisticas() async {
+    setState(() {
+      _loadingStats = true;
+    });
+
+    try {
+      final stats = await _hojaRutaService.getEstadisticas();
+      if (mounted) {
+        setState(() {
+          _totalHojasRuta = stats['total'] as int;
+          _ultimaActualizacion = stats['ultimaActualizacion'] as DateTime?;
+          _loadingStats = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingStats = false;
+        });
+        _showSnack('Error al cargar estadísticas: $e');
+      }
+    }
   }
 
   Future<void> _logout() async {
@@ -93,6 +125,15 @@ class _RutaScreenState extends State<RutaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                // Sección de estadísticas
+                _EstadisticasCard(
+                  total: _totalHojasRuta,
+                  ultimaActualizacion: _ultimaActualizacion,
+                  loading: _loadingStats,
+                  onRefresh: _loadEstadisticas,
+                  primary: primary,
+                ),
+                const SizedBox(height: 16),
                 // Sección de acciones en tarjeta
                 Container(
                   width: double.infinity,
@@ -317,6 +358,193 @@ class _ActionButton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _EstadisticasCard extends StatelessWidget {
+  const _EstadisticasCard({
+    required this.total,
+    required this.ultimaActualizacion,
+    required this.loading,
+    required this.onRefresh,
+    required this.primary,
+  });
+
+  final int total;
+  final DateTime? ultimaActualizacion;
+  final bool loading;
+  final VoidCallback onRefresh;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Estadísticas',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                onPressed: loading ? null : onRefresh,
+                tooltip: 'Actualizar estadísticas',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            Column(
+              children: <Widget>[
+                // Total de hojas de ruta
+                _StatItem(
+                  icon: Icons.assignment,
+                  label: 'Total de hojas de ruta',
+                  value: total.toString(),
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                // Última actualización
+                _StatItem(
+                  icon: Icons.update,
+                  label: 'Última actualización',
+                  value: ultimaActualizacion != null
+                      ? DateFormatter.formatDateTime(
+                          ultimaActualizacion!,
+                          pattern: 'dd/MM/yyyy HH:mm',
+                        )
+                      : 'N/A',
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+    required this.fg,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white10 : color.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: fg.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: fg,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
