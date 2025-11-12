@@ -187,33 +187,6 @@ class _RutaScreenState extends State<RutaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Sección de estadísticas
-                _EstadisticasCard(
-                  total: _totalHojasRuta,
-                  ultimaActualizacion: _ultimaActualizacion,
-                  loading: _loadingStats,
-                  onRefresh: _loadEstadisticas,
-                  primary: primary,
-                ),
-                const SizedBox(height: 16),
-                // Sección de información general
-                _InformacionGeneralCard(
-                  hojaRuta: _hojaRutaActual,
-                  loading: _loadingHojaRuta,
-                  onRefresh: _loadHojaRutaActual,
-                  primary: primary,
-                ),
-                const SizedBox(height: 16),
-                // Sección de personal
-                _PersonalCard(
-                  personal: _personal,
-                  loading: _loadingPersonal,
-                  onRefresh: _loadPersonal,
-                  onEditarHoras: _editarHorasPersonal,
-                  onVerDatos: _verDatosEmpleado,
-                  primary: primary,
-                ),
-                const SizedBox(height: 16),
                 // Sección de acciones en tarjeta
                 Container(
                   width: double.infinity,
@@ -270,6 +243,33 @@ class _RutaScreenState extends State<RutaScreen> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 16),
+                // Sección de estadísticas
+                _EstadisticasCard(
+                  total: _totalHojasRuta,
+                  ultimaActualizacion: _ultimaActualizacion,
+                  loading: _loadingStats,
+                  onRefresh: _loadEstadisticas,
+                  primary: primary,
+                ),
+                const SizedBox(height: 16),
+                // Sección de información general
+                _InformacionGeneralCard(
+                  hojaRuta: _hojaRutaActual,
+                  loading: _loadingHojaRuta,
+                  onRefresh: _loadHojaRutaActual,
+                  primary: primary,
+                ),
+                const SizedBox(height: 16),
+                // Sección de personal
+                _PersonalCard(
+                  personal: _personal,
+                  loading: _loadingPersonal,
+                  onRefresh: _loadPersonal,
+                  onEditarHoras: _editarHorasPersonal,
+                  onVerDatos: _verDatosEmpleado,
+                  primary: primary,
                 ),
               ],
             ),
