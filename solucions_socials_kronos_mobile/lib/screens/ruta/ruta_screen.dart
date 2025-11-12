@@ -18,6 +18,10 @@ class _RutaScreenState extends State<RutaScreen> {
   int _totalHojasRuta = 0;
   DateTime? _ultimaActualizacion;
   bool _loadingStats = true;
+  Map<String, dynamic>? _hojaRutaActual;
+  bool _loadingHojaRuta = true;
+  List<Map<String, dynamic>> _personal = <Map<String, dynamic>>[];
+  bool _loadingPersonal = true;
 
   @override
   void initState() {
@@ -25,6 +29,39 @@ class _RutaScreenState extends State<RutaScreen> {
     _authService = AuthService(Supabase.instance.client);
     _hojaRutaService = HojaRutaService(Supabase.instance.client);
     _loadEstadisticas();
+    _loadHojaRutaActual();
+  }
+
+  Future<void> _loadPersonal() async {
+    if (_hojaRutaActual == null || _hojaRutaActual!['id'] == null) {
+      setState(() {
+        _personal = <Map<String, dynamic>>[];
+        _loadingPersonal = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _loadingPersonal = true;
+    });
+
+    try {
+      final hojaRutaId = _hojaRutaActual!['id'] as String;
+      final personal = await _hojaRutaService.getPersonalHojaRuta(hojaRutaId);
+      if (mounted) {
+        setState(() {
+          _personal = personal;
+          _loadingPersonal = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingPersonal = false;
+        });
+        _showSnack('Error al cargar el personal: $e');
+      }
+    }
   }
 
   Future<void> _loadEstadisticas() async {
@@ -47,6 +84,31 @@ class _RutaScreenState extends State<RutaScreen> {
           _loadingStats = false;
         });
         _showSnack('Error al cargar estadísticas: $e');
+      }
+    }
+  }
+
+  Future<void> _loadHojaRutaActual() async {
+    setState(() {
+      _loadingHojaRuta = true;
+    });
+
+    try {
+      final hojaRuta = await _hojaRutaService.getHojaRutaActual();
+      if (mounted) {
+        setState(() {
+          _hojaRutaActual = hojaRuta;
+          _loadingHojaRuta = false;
+        });
+        // Cargar personal cuando se carga la hoja de ruta
+        await _loadPersonal();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingHojaRuta = false;
+        });
+        _showSnack('Error al cargar la hoja de ruta: $e');
       }
     }
   }
@@ -134,6 +196,24 @@ class _RutaScreenState extends State<RutaScreen> {
                   primary: primary,
                 ),
                 const SizedBox(height: 16),
+                // Sección de información general
+                _InformacionGeneralCard(
+                  hojaRuta: _hojaRutaActual,
+                  loading: _loadingHojaRuta,
+                  onRefresh: _loadHojaRutaActual,
+                  primary: primary,
+                ),
+                const SizedBox(height: 16),
+                // Sección de personal
+                _PersonalCard(
+                  personal: _personal,
+                  loading: _loadingPersonal,
+                  onRefresh: _loadPersonal,
+                  onEditarHoras: _editarHorasPersonal,
+                  onVerDatos: _verDatosEmpleado,
+                  primary: primary,
+                ),
+                const SizedBox(height: 16),
                 // Sección de acciones en tarjeta
                 Container(
                   width: double.infinity,
@@ -215,8 +295,41 @@ class _RutaScreenState extends State<RutaScreen> {
       // TODO: Aquí puedes actualizar la UI o hacer alguna acción adicional
       if (mounted) {
         _showSnack('Archivo procesado correctamente');
+        // Recargar datos después de subir
+        await _loadHojaRutaActual();
       }
     }
+  }
+
+  Future<void> _editarHorasPersonal(Map<String, dynamic> empleado) async {
+    final String personalId = empleado['id'] as String;
+    final String nombre = empleado['nombre'] as String;
+    final double horasActuales = (empleado['horas'] as num?)?.toDouble() ?? 0.0;
+
+    final result = await showDialog<double>(
+      context: context,
+      builder: (BuildContext context) =>
+          _EditarHorasDialog(nombre: nombre, horasActuales: horasActuales),
+    );
+
+    if (result != null && result != horasActuales) {
+      try {
+        await _hojaRutaService.actualizarHorasPersonal(personalId, result);
+        if (mounted) {
+          _showSnack('Horas actualizadas correctamente');
+          await _loadPersonal();
+        }
+      } catch (e) {
+        if (mounted) {
+          _showSnack('Error al actualizar las horas: $e');
+        }
+      }
+    }
+  }
+
+  void _verDatosEmpleado(Map<String, dynamic> empleado) {
+    // TODO: Implementar vista de datos del empleado
+    _showSnack('Ver datos de ${empleado['nombre']} (próximamente)');
   }
 }
 
@@ -545,6 +658,678 @@ class _StatItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InformacionGeneralCard extends StatelessWidget {
+  const _InformacionGeneralCard({
+    required this.hojaRuta,
+    required this.loading,
+    required this.onRefresh,
+    required this.primary,
+  });
+
+  final Map<String, dynamic>? hojaRuta;
+  final bool loading;
+  final VoidCallback onRefresh;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Información General',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                onPressed: loading ? null : onRefresh,
+                tooltip: 'Actualizar información',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (hojaRuta == null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'No hay hoja de ruta cargada',
+                  style: TextStyle(
+                    color: fg.withOpacity(0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: <Widget>[
+                _InfoRow(
+                  label: 'Fecha del Servicio',
+                  value: _formatFechaServicio(hojaRuta!['fecha_servicio']),
+                  icon: Icons.calendar_today,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                _InfoRow(
+                  label: 'Cliente',
+                  value: hojaRuta!['cliente'] as String? ?? '—',
+                  icon: Icons.business,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                _InfoRow(
+                  label: 'Nº Personas',
+                  value: (hojaRuta!['num_personas'] as int? ?? 0).toString(),
+                  icon: Icons.people,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                _InfoRow(
+                  label: 'Responsable',
+                  value: hojaRuta!['responsable'] as String? ?? '—',
+                  icon: Icons.person,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                _InfoRow(
+                  label: 'Transportista',
+                  value: hojaRuta!['transportista'] as String? ?? '—',
+                  icon: Icons.local_shipping,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                _InfoRow(
+                  label: 'Contacto',
+                  value: hojaRuta!['contacto'] as String? ?? '—',
+                  icon: Icons.phone,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+                const SizedBox(height: 10),
+                _InfoRow(
+                  label: 'Dirección',
+                  value: hojaRuta!['direccion'] as String? ?? '—',
+                  icon: Icons.location_on,
+                  color: primary,
+                  isDark: isDark,
+                  fg: fg,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFechaServicio(dynamic fecha) {
+    if (fecha == null) return '—';
+    try {
+      if (fecha is String) {
+        final date = DateTime.parse(fecha);
+        return DateFormatter.formatDate(date);
+      }
+      return fecha.toString();
+    } catch (_) {
+      return fecha.toString();
+    }
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.isDark,
+    required this.fg,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final bool isDark;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white10 : color.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: fg.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonalCard extends StatelessWidget {
+  const _PersonalCard({
+    required this.personal,
+    required this.loading,
+    required this.onRefresh,
+    required this.onEditarHoras,
+    required this.onVerDatos,
+    required this.primary,
+  });
+
+  final List<Map<String, dynamic>> personal;
+  final bool loading;
+  final VoidCallback onRefresh;
+  final Function(Map<String, dynamic>) onEditarHoras;
+  final Function(Map<String, dynamic>) onVerDatos;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Personal',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                onPressed: loading ? null : onRefresh,
+                tooltip: 'Actualizar personal',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (personal.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'No hay personal asignado',
+                  style: TextStyle(
+                    color: fg.withOpacity(0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: <Widget>[
+                for (int i = 0; i < personal.length; i++) ...<Widget>[
+                  _PersonalItem(
+                    empleado: personal[i],
+                    onEditarHoras: () => onEditarHoras(personal[i]),
+                    onVerDatos: () => onVerDatos(personal[i]),
+                    primary: primary,
+                    isDark: isDark,
+                    fg: fg,
+                  ),
+                  if (i != personal.length - 1) const SizedBox(height: 10),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonalItem extends StatelessWidget {
+  const _PersonalItem({
+    required this.empleado,
+    required this.onEditarHoras,
+    required this.onVerDatos,
+    required this.primary,
+    required this.isDark,
+    required this.fg,
+  });
+
+  final Map<String, dynamic> empleado;
+  final VoidCallback onEditarHoras;
+  final VoidCallback onVerDatos;
+  final Color primary;
+  final bool isDark;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    final String nombre = empleado['nombre'] as String? ?? '—';
+    final double horas = (empleado['horas'] as num?)?.toDouble() ?? 0.0;
+    final String horasTexto = horas.toStringAsFixed(1);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.person, color: primary, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  nombre,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.access_time,
+                      size: 14,
+                      color: fg.withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$horasTexto horas',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: fg.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Botón Ver Datos
+          IconButton(
+            icon: const Icon(Icons.info_outline, size: 20),
+            onPressed: onVerDatos,
+            tooltip: 'Ver datos',
+            color: primary,
+            style: IconButton.styleFrom(
+              backgroundColor: primary.withOpacity(0.1),
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Botón Editar
+          IconButton(
+            icon: const Icon(Icons.edit, size: 20),
+            onPressed: onEditarHoras,
+            tooltip: 'Editar horas',
+            color: primary,
+            style: IconButton.styleFrom(
+              backgroundColor: primary.withOpacity(0.1),
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditarHorasDialog extends StatefulWidget {
+  const _EditarHorasDialog({required this.nombre, required this.horasActuales});
+
+  final String nombre;
+  final double horasActuales;
+
+  @override
+  State<_EditarHorasDialog> createState() => _EditarHorasDialogState();
+}
+
+class _EditarHorasDialogState extends State<_EditarHorasDialog> {
+  late final TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.horasActuales.toStringAsFixed(1),
+    );
+    // Seleccionar todo el texto al abrir
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _incrementar() {
+    final double current = double.tryParse(_controller.text) ?? 0.0;
+    final double nuevo = current + 0.5;
+    _controller.text = nuevo.toStringAsFixed(1);
+  }
+
+  void _decrementar() {
+    final double current = double.tryParse(_controller.text) ?? 0.0;
+    final double nuevo = (current - 0.5).clamp(0.0, double.infinity);
+    _controller.text = nuevo.toStringAsFixed(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF4CAF51);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.edit, color: primary, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Editar Horas',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Empleado: ${widget.nombre}',
+              style: TextStyle(fontSize: 14, color: fg.withOpacity(0.7)),
+            ),
+            const SizedBox(height: 24),
+            // Controles de horas
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: _decrementar,
+                  iconSize: 32,
+                  color: primary,
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 100,
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textAlign: TextAlign.center,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: fg,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '0.0',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: primary, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed: _incrementar,
+                  iconSize: 32,
+                  color: primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                'horas',
+                style: TextStyle(fontSize: 14, color: fg.withOpacity(0.6)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Botones
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final double? horas = double.tryParse(_controller.text);
+                      if (horas != null && horas >= 0) {
+                        Navigator.of(context).pop(horas);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Por favor, introduce un número válido',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Guardar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

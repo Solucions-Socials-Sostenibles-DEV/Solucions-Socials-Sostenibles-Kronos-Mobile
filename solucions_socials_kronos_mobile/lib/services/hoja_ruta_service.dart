@@ -51,4 +51,53 @@ class HojaRutaService {
       throw Exception('Error al obtener estadísticas: $e');
     }
   }
+
+  /// Obtiene la hoja de ruta más reciente (última actualizada)
+  Future<Map<String, dynamic>?> getHojaRutaActual() async {
+    try {
+      final List<dynamic> data = await _client
+          .from('hojas_ruta')
+          .select(
+            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas',
+          )
+          .order('updated_at', ascending: false)
+          .limit(1);
+
+      if (data.isNotEmpty) {
+        return data.first as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Error al obtener la hoja de ruta actual: $e');
+    }
+  }
+
+  /// Obtiene el personal de una hoja de ruta
+  Future<List<Map<String, dynamic>>> getPersonalHojaRuta(
+    String hojaRutaId,
+  ) async {
+    try {
+      final List<dynamic> data = await _client
+          .from('hojas_ruta_personal')
+          .select('id, nombre, horas, empleado_id')
+          .eq('hoja_ruta_id', hojaRutaId)
+          .order('nombre');
+
+      return data.cast<Map<String, dynamic>>();
+    } catch (e) {
+      throw Exception('Error al obtener el personal: $e');
+    }
+  }
+
+  /// Actualiza las horas de un empleado
+  Future<void> actualizarHorasPersonal(String personalId, double horas) async {
+    try {
+      await _client
+          .from('hojas_ruta_personal')
+          .update(<String, dynamic>{'horas': horas})
+          .eq('id', personalId);
+    } catch (e) {
+      throw Exception('Error al actualizar las horas: $e');
+    }
+  }
 }
