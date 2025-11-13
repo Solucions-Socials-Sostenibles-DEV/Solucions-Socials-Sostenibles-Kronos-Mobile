@@ -172,3 +172,5 @@ MIT
 **Versión**: 0.1.0 (Desarrollo inicial)
 **Última actualización**: 2025-11-11
 
+Desarrollado por Marc Fernández Messa, utilizando la APP Desktop desarrollada por Brian Bautista para Solucions Socials
+

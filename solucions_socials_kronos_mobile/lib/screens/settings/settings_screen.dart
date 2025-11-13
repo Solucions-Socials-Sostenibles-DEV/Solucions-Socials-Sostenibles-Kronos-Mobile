@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/theme_controller.dart';
 import '../../config/external_services_config.dart';
+import '../../utils/roles.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -178,6 +179,9 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          // Rol de usuario
+          const _UserRoleCard(),
           const SizedBox(height: 16),
           // Estado de conexiones (debajo de divisas)
           const _ConnectionsStatusCard(),
@@ -514,6 +518,212 @@ class _AppInfoCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UserRoleCard extends StatefulWidget {
+  const _UserRoleCard();
+
+  @override
+  State<_UserRoleCard> createState() => _UserRoleCardState();
+}
+
+class _UserRoleCardState extends State<_UserRoleCard> {
+  String? _role; // 'user' | 'manager' | 'admin'
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final String? userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        setState(() {
+          _error = 'No hay sesión';
+          _role = null;
+        });
+        return;
+      }
+      final List<Map<String, dynamic>> rows = await Supabase.instance.client
+          .from('user_profiles')
+          .select('role')
+          .eq('id', userId)
+          .limit(1);
+      final String? dbRole = rows.isNotEmpty
+          ? rows.first['role'] as String?
+          : null;
+      setState(() => _role = RoleUtils.toCanonical(dbRole));
+    } catch (e) {
+      setState(() => _error = 'No se pudo cargar el rol');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _updateRole(String newRole) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final String? userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+      // 1) Sincronizar metadata de Auth (para Desktop/u otras UIs que lean user.userMetadata.role)
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(data: <String, dynamic>{'role': newRole}),
+      );
+      // 2) Persistir rol real en BBDD (fuente de la verdad para RLS)
+      await Supabase.instance.client
+          .from('user_profiles')
+          .update(<String, dynamic>{'role': newRole})
+          .eq('id', userId);
+      setState(() => _role = newRole);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rol actualizado correctamente')),
+        );
+      }
+    } catch (e) {
+      setState(() => _error = 'No se pudo actualizar el rol');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF4CAF51);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+    const List<String> roles = RoleUtils.canonical;
+    String labelFor(String r) => RoleUtils.label(r);
+
+    final bool isAdmin = _role == 'admin';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Usuarios',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.redAccent),
+                      ),
+                    ),
+                  Text(
+                    'Rol actual',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 6),
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: fg.withOpacity(0.2)),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        borderSide: BorderSide(color: primary, width: 1.5),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: roles.contains(RoleUtils.toCanonical(_role))
+                            ? RoleUtils.toCanonical(_role)
+                            : null,
+                        hint: const Text('Selecciona un rol'),
+                        isExpanded: true,
+                        items: roles
+                            .map(
+                              (String r) => DropdownMenuItem<String>(
+                                value: r,
+                                child: Text(labelFor(r)),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: _loading || !isAdmin
+                            ? null
+                            : (String? value) {
+                                if (value != null) _updateRole(value);
+                              },
+                      ),
+                    ),
+                  ),
+                  if (!isAdmin)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Solo administradores pueden modificar el rol.',
+                        style: TextStyle(
+                          color: fg.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/date_formatter.dart';
+import '../../utils/roles.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -99,9 +100,14 @@ class _UserScreenState extends State<UserScreen> {
         return;
       }
 
+      // Sincronizar metadata y BBDD con rol canónico
+      final String canonical = RoleUtils.toCanonical(nuevoRol);
+      await client.auth.updateUser(
+        UserAttributes(data: <String, dynamic>{'role': canonical}),
+      );
       await client
           .from('user_profiles')
-          .update(<String, dynamic>{'name': nuevoNombre, 'role': nuevoRol})
+          .update(<String, dynamic>{'name': nuevoNombre, 'role': canonical})
           .eq('id', userId);
 
       if (mounted) {
@@ -244,7 +250,11 @@ class _UserScreenState extends State<UserScreen> {
                             border: Border.all(color: primary.withOpacity(0.3)),
                           ),
                           child: Text(
-                            _userProfile?['role'] as String? ?? 'Sin rol',
+                            RoleUtils.label(
+                              RoleUtils.toCanonical(
+                                _userProfile?['role'] as String?,
+                              ),
+                            ),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -627,20 +637,14 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
   late final TextEditingController _nombreController;
   late String _rolSeleccionado;
 
-  final List<String> _roles = <String>[
-    'administrador',
-    'Jefe',
-    'Supervisor',
-    'Empleado',
-    'Usuario',
-  ];
+  final List<String> _roles = RoleUtils.canonical;
 
   @override
   void initState() {
     super.initState();
     _nombreController = TextEditingController(text: widget.nombreActual);
     _rolSeleccionado = widget.rolActual.isNotEmpty
-        ? widget.rolActual
+        ? RoleUtils.toCanonical(widget.rolActual)
         : _roles.first;
   }
 
@@ -724,7 +728,10 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
                 prefixIcon: const Icon(Icons.badge),
               ),
               items: _roles.map((String rol) {
-                return DropdownMenuItem<String>(value: rol, child: Text(rol));
+                return DropdownMenuItem<String>(
+                  value: rol,
+                  child: Text(RoleUtils.label(rol)),
+                );
               }).toList(),
               onChanged: (String? nuevoRol) {
                 if (nuevoRol != null) {
@@ -760,7 +767,7 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
                       }
                       Navigator.of(context).pop(<String, String>{
                         'nombre': nombre,
-                        'rol': _rolSeleccionado,
+                        'rol': _rolSeleccionado, // canónico
                       });
                     },
                     style: ElevatedButton.styleFrom(
