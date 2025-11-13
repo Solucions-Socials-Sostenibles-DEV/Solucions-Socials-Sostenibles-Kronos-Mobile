@@ -22,14 +22,40 @@ class _RutaScreenState extends State<RutaScreen> {
   bool _loadingHojaRuta = true;
   List<Map<String, dynamic>> _personal = <Map<String, dynamic>>[];
   bool _loadingPersonal = true;
+  String? _userRole;
+  bool get _canEditPersonal =>
+      _userRole == 'admin' ||
+      _userRole == 'management' ||
+      _userRole == 'manager';
 
   @override
   void initState() {
     super.initState();
     _authService = AuthService(Supabase.instance.client);
     _hojaRutaService = HojaRutaService(Supabase.instance.client);
+    _loadUserRole();
     _loadEstadisticas();
     _loadHojaRutaActual();
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final SupabaseClient client = Supabase.instance.client;
+      final String? uid = client.auth.currentUser?.id;
+      if (uid == null) return;
+      final List<Map<String, dynamic>> rows = await client
+          .from('user_profiles')
+          .select('role')
+          .eq('id', uid)
+          .limit(1);
+      if (mounted) {
+        setState(() {
+          _userRole = rows.isNotEmpty ? rows.first['role'] as String? : null;
+        });
+      }
+    } catch (_) {
+      // Ignorar: se considerará sin permisos de edición
+    }
   }
 
   Future<void> _loadPersonal() async {
@@ -270,6 +296,7 @@ class _RutaScreenState extends State<RutaScreen> {
                   onEditarHoras: _editarHorasPersonal,
                   onVerDatos: _verDatosEmpleado,
                   primary: primary,
+                  canEdit: _canEditPersonal,
                 ),
               ],
             ),
@@ -302,6 +329,10 @@ class _RutaScreenState extends State<RutaScreen> {
   }
 
   Future<void> _editarHorasPersonal(Map<String, dynamic> empleado) async {
+    if (!_canEditPersonal) {
+      _showSnack('No tienes permisos para editar horas');
+      return;
+    }
     final String personalId = empleado['id'] as String;
     final String nombre = empleado['nombre'] as String;
     final double horasActuales = (empleado['horas'] as num?)?.toDouble() ?? 0.0;
@@ -920,6 +951,7 @@ class _PersonalCard extends StatelessWidget {
     required this.onEditarHoras,
     required this.onVerDatos,
     required this.primary,
+    required this.canEdit,
   });
 
   final List<Map<String, dynamic>> personal;
@@ -928,6 +960,7 @@ class _PersonalCard extends StatelessWidget {
   final Function(Map<String, dynamic>) onEditarHoras;
   final Function(Map<String, dynamic>) onVerDatos;
   final Color primary;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -981,7 +1014,7 @@ class _PersonalCard extends StatelessWidget {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
-              if (!loading && personal.isNotEmpty)
+              if (!loading && personal.isNotEmpty && canEdit)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -1052,6 +1085,7 @@ class _PersonalCard extends StatelessWidget {
                     primary: primary,
                     isDark: isDark,
                     fg: fg,
+                    canEdit: canEdit,
                   ),
                   if (i != personal.length - 1) const SizedBox(height: 10),
                 ],
@@ -1071,6 +1105,7 @@ class _PersonalItem extends StatelessWidget {
     required this.primary,
     required this.isDark,
     required this.fg,
+    required this.canEdit,
   });
 
   final Map<String, dynamic> empleado;
@@ -1079,6 +1114,7 @@ class _PersonalItem extends StatelessWidget {
   final Color primary;
   final bool isDark;
   final Color fg;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -1123,24 +1159,25 @@ class _PersonalItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.access_time,
-                      size: 14,
-                      color: fg.withOpacity(0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$horasTexto horas',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: fg.withOpacity(0.7),
-                        fontWeight: FontWeight.w500,
+                if (canEdit)
+                  Row(
+                    children: <Widget>[
+                      Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: fg.withOpacity(0.6),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$horasTexto horas',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: fg.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -1158,16 +1195,17 @@ class _PersonalItem extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Botón Editar
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: onEditarHoras,
-            tooltip: 'Editar horas',
-            color: primary,
-            style: IconButton.styleFrom(
-              backgroundColor: primary.withOpacity(0.1),
-              padding: const EdgeInsets.all(8),
+          if (canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: onEditarHoras,
+              tooltip: 'Editar horas',
+              color: primary,
+              style: IconButton.styleFrom(
+                backgroundColor: primary.withOpacity(0.1),
+                padding: const EdgeInsets.all(8),
+              ),
             ),
-          ),
         ],
       ),
     );
