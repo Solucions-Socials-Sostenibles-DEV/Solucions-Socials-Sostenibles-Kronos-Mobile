@@ -81,6 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color fg = isDark ? Colors.white : Colors.black;
     final Color muted = fg.withOpacity(0.7);
+    const Color primary = Color(0xFF4CAF51);
     final LinearGradient bgGradient = isDark
         ? const LinearGradient(
             colors: <Color>[Color(0xFF0B0C0F), Color(0xFF14161A)],
@@ -214,16 +215,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
 
                     const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => setState(() => _isRegister = !_isRegister),
-                      child: Text(
-                        _isRegister
-                            ? '¿Ya tienes cuenta? Iniciar sesión'
-                            : '¿No tienes cuenta? Crear una',
-                        style: TextStyle(color: fg.withOpacity(0.8)),
-                      ),
+                    Column(
+                      children: <Widget>[
+                        Text(
+                          _isRegister
+                              ? '¿Ya tienes cuenta?'
+                              : '¿No tienes cuenta?',
+                          style: TextStyle(color: muted, fontSize: 13),
+                        ),
+                        const SizedBox(height: 4),
+                        TextButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () =>
+                                    setState(() => _isRegister = !_isRegister),
+                          child: Text(
+                            _isRegister ? 'Iniciar sesión' : 'Crear una',
+                            style: const TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       'Protegido por Supabase',
@@ -362,8 +377,8 @@ class _RolePicker extends StatelessWidget {
     final Map<String, String> descriptions = <String, String>{
       'user': 'Acceso básico de la aplicación',
       'manager': 'Gestión de equipos y reportes',
-      'management': 'Subida de archivos y análisis completo',
-      'admin': 'Control total del sistema (equipo técnico)',
+      'management': 'Analisis completo de archivos',
+      'admin': 'Control total del sistema',
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
