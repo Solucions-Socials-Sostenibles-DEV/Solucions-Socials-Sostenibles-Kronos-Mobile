@@ -28,6 +28,7 @@ class _RutaScreenState extends State<RutaScreen> {
       _userRole == 'manager';
   bool get _canAddNotes => _userRole == 'admin' || _userRole == 'manager';
   List<String> _notas = <String>[];
+  Map<String, String> _horarios = <String, String>{};
 
   @override
   void initState() {
@@ -132,6 +133,20 @@ class _RutaScreenState extends State<RutaScreen> {
                   .where((String e) => e.isNotEmpty)
                   .toList() ??
               <String>[];
+          final Map<String, dynamic>? h =
+              hojaRuta?['horarios'] as Map<String, dynamic>?;
+          _horarios = <String, String>{
+            if (h != null && (h['montaje']?.toString().isNotEmpty ?? false))
+              'Montaje': h['montaje'].toString(),
+            if (h != null && (h['welcome']?.toString().isNotEmpty ?? false))
+              'Welcome': h['welcome'].toString(),
+            if (h != null && (h['desayuno']?.toString().isNotEmpty ?? false))
+              'Desayuno': h['desayuno'].toString(),
+            if (h != null && (h['comida']?.toString().isNotEmpty ?? false))
+              'Comida': h['comida'].toString(),
+            if (h != null && (h['recogida']?.toString().isNotEmpty ?? false))
+              'Recogida': h['recogida'].toString(),
+          };
         });
         // Cargar personal cuando se carga la hoja de ruta
         await _loadPersonal();
@@ -292,6 +307,9 @@ class _RutaScreenState extends State<RutaScreen> {
                   onRefresh: _loadHojaRutaActual,
                   primary: primary,
                 ),
+                const SizedBox(height: 16),
+                // Sección de horarios
+                _HorariosCard(horarios: _horarios, primary: primary),
                 const SizedBox(height: 16),
                 // Sección de personal
                 _PersonalCard(
@@ -618,6 +636,94 @@ class _ActionButton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HorariosCard extends StatelessWidget {
+  const _HorariosCard({required this.horarios, required this.primary});
+
+  final Map<String, String> horarios;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+    final List<MapEntry<String, String>> entries = horarios.entries.toList();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Horarios',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (entries.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Sin horarios',
+                style: TextStyle(
+                  color: fg.withOpacity(0.6),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: <Widget>[
+                for (int i = 0; i < entries.length; i++) ...<Widget>[
+                  Row(
+                    children: <Widget>[
+                      Icon(Icons.schedule, size: 18, color: primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${entries[i].key}: ${entries[i].value}',
+                          style: TextStyle(color: fg, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (i != entries.length - 1) const SizedBox(height: 8),
+                ],
+              ],
+            ),
+        ],
       ),
     );
   }

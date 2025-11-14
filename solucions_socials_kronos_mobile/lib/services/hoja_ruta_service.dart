@@ -58,7 +58,7 @@ class HojaRutaService {
       final List<dynamic> data = await _client
           .from('hojas_ruta')
           .select(
-            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas',
+            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios',
           )
           .order('updated_at', ascending: false)
           .limit(1);
