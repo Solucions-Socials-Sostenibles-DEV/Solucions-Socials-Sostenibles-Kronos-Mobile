@@ -26,6 +26,7 @@ class _RutaScreenState extends State<RutaScreen> {
       _userRole == 'admin' ||
       _userRole == 'management' ||
       _userRole == 'manager';
+  List<String> _notas = <String>[];
 
   @override
   void initState() {
@@ -124,6 +125,12 @@ class _RutaScreenState extends State<RutaScreen> {
         setState(() {
           _hojaRutaActual = hojaRuta;
           _loadingHojaRuta = false;
+          _notas =
+              (hojaRuta?['notas'] as List<dynamic>?)
+                  ?.map((dynamic e) => e?.toString() ?? '')
+                  .where((String e) => e.isNotEmpty)
+                  .toList() ??
+              <String>[];
         });
         // Cargar personal cuando se carga la hoja de ruta
         await _loadPersonal();
@@ -295,6 +302,13 @@ class _RutaScreenState extends State<RutaScreen> {
                   primary: primary,
                   canEdit: _canEditPersonal,
                 ),
+                const SizedBox(height: 16),
+                _NotasCard(
+                  notas: _notas,
+                  canEdit: _canEditPersonal,
+                  onAdd: _addNota,
+                  primary: primary,
+                ),
               ],
             ),
           );
@@ -309,6 +323,94 @@ class _RutaScreenState extends State<RutaScreen> {
   }
 
   // Subida de hoja deshabilitada en esta versión
+
+  Future<void> _addNota() async {
+    final TextEditingController controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        const Color primary = Color(0xFF4CAF51);
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Añadir nota importante',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Escribe la nota...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primary, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final String text = controller.text.trim();
+                          if (text.isNotEmpty) {
+                            Navigator.of(context).pop(text);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Guardar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (result != null && result.isNotEmpty && _hojaRutaActual?['id'] != null) {
+      try {
+        final List<String> nuevas = <String>[..._notas, result];
+        await _hojaRutaService.actualizarNotas(
+          _hojaRutaActual!['id'] as String,
+          nuevas,
+        );
+        if (mounted) {
+          setState(() => _notas = nuevas);
+          _showSnack('Nota añadida');
+        }
+      } catch (e) {
+        _showSnack('Error al guardar la nota: $e');
+      }
+    }
+  }
 
   Future<void> _editarHorasPersonal(Map<String, dynamic> empleado) async {
     if (!_canEditPersonal) {
@@ -470,6 +572,121 @@ class _ActionButton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NotasCard extends StatelessWidget {
+  const _NotasCard({
+    required this.notas,
+    required this.canEdit,
+    required this.onAdd,
+    required this.primary,
+  });
+
+  final List<String> notas;
+  final bool canEdit;
+  final VoidCallback onAdd;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Notas importantes',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              if (canEdit)
+                IconButton(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Añadir nota',
+                  color: primary,
+                  style: IconButton.styleFrom(
+                    backgroundColor: primary.withOpacity(0.1),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (notas.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Sin notas',
+                style: TextStyle(
+                  color: fg.withOpacity(0.6),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: <Widget>[
+                for (int i = 0; i < notas.length; i++) ...<Widget>[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(top: 7),
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          notas[i],
+                          style: TextStyle(color: fg, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (i != notas.length - 1) const SizedBox(height: 8),
+                ],
+              ],
+            ),
+        ],
       ),
     );
   }

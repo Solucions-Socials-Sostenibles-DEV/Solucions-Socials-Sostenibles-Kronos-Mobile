@@ -58,7 +58,7 @@ class HojaRutaService {
       final List<dynamic> data = await _client
           .from('hojas_ruta')
           .select(
-            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas',
+            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas',
           )
           .order('updated_at', ascending: false)
           .limit(1);
@@ -98,6 +98,18 @@ class HojaRutaService {
           .eq('id', personalId);
     } catch (e) {
       throw Exception('Error al actualizar las horas: $e');
+    }
+  }
+
+  /// Actualiza las notas importantes de una hoja de ruta
+  Future<void> actualizarNotas(String hojaRutaId, List<String> notas) async {
+    try {
+      await _client
+          .from('hojas_ruta')
+          .update(<String, dynamic>{'notas': notas})
+          .eq('id', hojaRutaId);
+    } catch (e) {
+      throw Exception('Error al actualizar las notas: $e');
     }
   }
 }
