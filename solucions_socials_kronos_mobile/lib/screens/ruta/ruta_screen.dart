@@ -26,6 +26,7 @@ class _RutaScreenState extends State<RutaScreen> {
       _userRole == 'admin' ||
       _userRole == 'management' ||
       _userRole == 'manager';
+  bool get _canAddNotes => _userRole == 'admin' || _userRole == 'manager';
   List<String> _notas = <String>[];
 
   @override
@@ -305,8 +306,9 @@ class _RutaScreenState extends State<RutaScreen> {
                 const SizedBox(height: 16),
                 _NotasCard(
                   notas: _notas,
-                  canEdit: _canEditPersonal,
+                  canEdit: _canAddNotes,
                   onAdd: _addNota,
+                  onDelete: _deleteNota,
                   primary: primary,
                 ),
               ],
@@ -325,6 +327,10 @@ class _RutaScreenState extends State<RutaScreen> {
   // Subida de hoja deshabilitada en esta versión
 
   Future<void> _addNota() async {
+    if (!_canAddNotes) {
+      _showSnack('No tienes permisos para añadir notas');
+      return;
+    }
     final TextEditingController controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
@@ -409,6 +415,46 @@ class _RutaScreenState extends State<RutaScreen> {
       } catch (e) {
         _showSnack('Error al guardar la nota: $e');
       }
+    }
+  }
+
+  Future<void> _deleteNota(int index) async {
+    if (!_canAddNotes) {
+      _showSnack('No tienes permisos para eliminar notas');
+      return;
+    }
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar nota'),
+          content: const Text('¿Seguro que quieres eliminar esta nota?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm != true || _hojaRutaActual?['id'] == null) return;
+    try {
+      final List<String> nuevas = <String>[..._notas]..removeAt(index);
+      await _hojaRutaService.actualizarNotas(
+        _hojaRutaActual!['id'] as String,
+        nuevas,
+      );
+      if (mounted) {
+        setState(() => _notas = nuevas);
+        _showSnack('Nota eliminada');
+      }
+    } catch (e) {
+      _showSnack('Error al eliminar la nota: $e');
     }
   }
 
@@ -582,12 +628,14 @@ class _NotasCard extends StatelessWidget {
     required this.notas,
     required this.canEdit,
     required this.onAdd,
+    required this.onDelete,
     required this.primary,
   });
 
   final List<String> notas;
   final bool canEdit;
   final VoidCallback onAdd;
+  final void Function(int index) onDelete;
   final Color primary;
 
   @override
@@ -680,6 +728,15 @@ class _NotasCard extends StatelessWidget {
                           style: TextStyle(color: fg, fontSize: 14),
                         ),
                       ),
+                      if (canEdit) ...<Widget>[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          tooltip: 'Eliminar nota',
+                          color: primary,
+                          onPressed: () => onDelete(i),
+                        ),
+                      ],
                     ],
                   ),
                   if (i != notas.length - 1) const SizedBox(height: 8),
