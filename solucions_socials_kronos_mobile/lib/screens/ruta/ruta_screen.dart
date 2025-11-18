@@ -1035,19 +1035,24 @@ class _ChecklistCard extends StatelessWidget {
               child: Column(
                 children: <Widget>[
                   TabBar(
-                    isScrollable: true,
+                    isScrollable: false,
                     labelColor: primary,
                     indicatorColor: primary,
+                    labelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    unselectedLabelStyle: const TextStyle(fontSize: 12),
                     tabs: const <Widget>[
                       Tab(text: 'General'),
-                      Tab(text: 'Equipamiento'),
+                      Tab(text: 'Equipo'),
                       Tab(text: 'Menús'),
                       Tab(text: 'Bebidas'),
                     ],
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 320,
+                    height: 360,
                     child: TabBarView(
                       children: <Widget>[
                         _GeneralChecklist(
@@ -1102,6 +1107,8 @@ class _SimpleChecklist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const BouncingScrollPhysics(),
       itemCount: items.length,
       itemBuilder: (BuildContext context, int i) {
         final Map<String, dynamic> it = items[i];
@@ -1171,6 +1178,7 @@ class _GeneralChecklist extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.only(right: 8),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
