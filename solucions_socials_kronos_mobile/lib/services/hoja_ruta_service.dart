@@ -175,4 +175,5 @@ class HojaRutaService {
       throw Exception('Error al actualizar la prioridad: $e');
     }
   }
+
 }
