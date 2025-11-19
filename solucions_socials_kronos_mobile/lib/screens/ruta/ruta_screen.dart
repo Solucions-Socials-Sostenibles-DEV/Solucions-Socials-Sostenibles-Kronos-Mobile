@@ -358,14 +358,17 @@ class _RutaScreenState extends State<RutaScreen> {
                   primary: primary,
                 ),
                 const SizedBox(height: 16),
-                // Apartado: Menús
-                _MenusCard(items: _ckMenus, primary: primary),
-                const SizedBox(height: 16),
                 // Apartado: Equipamientos y Material
                 _EquipamientosMaterialCard(
                   items: _ckEquipamiento,
                   primary: primary,
                 ),
+                const SizedBox(height: 16),
+                // Apartado: Menús
+                _MenusCard(items: _ckMenus, primary: primary),
+                const SizedBox(height: 16),
+                // Apartado: Bebidas
+                _BebidasCard(items: _ckBebidas, primary: primary),
               ],
             ),
           );
@@ -2768,5 +2771,103 @@ class _MenusCard extends StatelessWidget {
       return 'refrescos';
     }
     return 'otros';
+  }
+}
+
+class _BebidasCard extends StatelessWidget {
+  const _BebidasCard({required this.items, required this.primary});
+
+  final List<Map<String, dynamic>> items;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fg = isDark ? Colors.white : Colors.black;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2227) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Bebidas',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Sin bebidas',
+                style: TextStyle(
+                  color: fg.withOpacity(0.6),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: <Widget>[
+                for (int i = 0; i < items.length; i++) ...<Widget>[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(top: 7),
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          (items[i]['task'] as String?) ?? '—',
+                          style: TextStyle(color: fg, fontSize: 16),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (i != items.length - 1) const SizedBox(height: 8),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
