@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../main.dart';
 import '../../services/auth_service.dart';
 import '../../services/hoja_ruta_service.dart';
 import '../../utils/date_formatter.dart';
@@ -177,6 +178,11 @@ class _RutaScreenState extends State<RutaScreen> {
 
   Future<void> _logout() async {
     await _authService.signOut();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const AuthGate()),
+      (Route<dynamic> r) => false,
+    );
   }
 
   @override
