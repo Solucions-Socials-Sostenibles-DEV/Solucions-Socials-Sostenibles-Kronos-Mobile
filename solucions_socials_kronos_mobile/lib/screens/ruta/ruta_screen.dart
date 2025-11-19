@@ -190,6 +190,7 @@ class _RutaScreenState extends State<RutaScreen> {
     const Color primary = Color(0xFF4CAF51);
     const Color primaryDark = Color(0xFF3C8E41);
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FB),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -800,18 +801,18 @@ class _HorariosCard extends StatelessWidget {
     final List<MapEntry<String, String>> entries = horarios.entries.toList();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+          color: isDark ? Colors.white10 : primary.withOpacity(0.20),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -833,11 +834,11 @@ class _HorariosCard extends StatelessWidget {
                 'Horarios',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (entries.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -860,7 +861,7 @@ class _HorariosCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${entries[i].key}: ${entries[i].value}',
-                          style: TextStyle(color: fg, fontSize: 14),
+                          style: TextStyle(color: fg, fontSize: 15),
                         ),
                       ),
                     ],
@@ -896,18 +897,18 @@ class _NotasCard extends StatelessWidget {
     final Color fg = isDark ? Colors.white : Colors.black;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+          color: isDark ? Colors.white10 : primary.withOpacity(0.20),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -929,7 +930,7 @@ class _NotasCard extends StatelessWidget {
                 'Notas importantes',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const Spacer(),
               if (canEdit)
@@ -977,7 +978,11 @@ class _NotasCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           notas[i],
-                          style: TextStyle(color: fg, fontSize: 14),
+                          style: TextStyle(
+                            color: fg,
+                            fontSize: 15,
+                            height: 1.35,
+                          ),
                         ),
                       ),
                       if (canEdit) ...<Widget>[
@@ -1043,18 +1048,18 @@ class _ChecklistCard extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+          color: isDark ? Colors.white10 : primary.withOpacity(0.20),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -1076,11 +1081,11 @@ class _ChecklistCard extends StatelessWidget {
                 'Checklist de servicio',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (loading)
             const Center(
               child: Padding(
@@ -1558,18 +1563,18 @@ class _EstadisticasCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+          color: isDark ? Colors.white10 : primary.withOpacity(0.20),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -1743,18 +1748,18 @@ class _InformacionGeneralCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+          color: isDark ? Colors.white10 : primary.withOpacity(0.20),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -2007,18 +2012,18 @@ class _PersonalCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : primary.withOpacity(0.15),
+          color: isDark ? Colors.white10 : primary.withOpacity(0.20),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -2487,11 +2492,11 @@ class _EquipamientosMaterialCard extends StatelessWidget {
                 'Equipamientos y Material',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2632,11 +2637,11 @@ class _MenusCard extends StatelessWidget {
                 'Menús',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2825,11 +2830,11 @@ class _BebidasCard extends StatelessWidget {
                 'Bebidas',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),

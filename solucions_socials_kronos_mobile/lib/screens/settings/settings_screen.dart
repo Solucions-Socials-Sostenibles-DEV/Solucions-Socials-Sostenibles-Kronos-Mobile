@@ -19,6 +19,7 @@ class SettingsScreen extends StatelessWidget {
     final bool isDark = controller.isDark;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FB),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -75,18 +76,18 @@ class SettingsScreen extends StatelessWidget {
           // Sección tipo tarjeta como en Hoja de Ruta
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1F2227) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.10),
               ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
                   color: Colors.black.withOpacity(0.06),
-                  blurRadius: 14,
-                  offset: const Offset(0, 8),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -128,18 +129,18 @@ class SettingsScreen extends StatelessWidget {
           // Sección de divisas
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1F2227) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.10),
               ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
                   color: Colors.black.withOpacity(0.06),
-                  blurRadius: 14,
-                  offset: const Offset(0, 8),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -350,18 +351,18 @@ class _UpdateCardState extends State<_UpdateCard> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.10),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -452,18 +453,18 @@ class _AppInfoCard extends StatelessWidget {
     final Color fg = isDark ? Colors.white : Colors.black;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.10),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

@@ -141,6 +141,7 @@ class _UserScreenState extends State<UserScreen> {
     final Color fg = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FB),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -203,17 +204,17 @@ class _UserScreenState extends State<UserScreen> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF1F2227) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark
                             ? Colors.white10
-                            : primary.withOpacity(0.15),
+                            : primary.withOpacity(0.20),
                       ),
                       boxShadow: <BoxShadow>[
                         BoxShadow(
                           color: Colors.black.withOpacity(0.06),
-                          blurRadius: 14,
-                          offset: const Offset(0, 8),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
