@@ -2542,45 +2542,42 @@ class _MenusCard extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color fg = isDark ? Colors.white : Colors.black;
 
-    // Agrupar por categoría (si no existe, inferir desde el texto)
+    // Agrupar por bloque de menú (Welcome, PAUSA CAFE, COMIDA, REFRESCOS)
     final Map<String, List<Map<String, dynamic>>> grouped =
         <String, List<Map<String, dynamic>>>{};
     for (final Map<String, dynamic> it in items) {
       final String task = (it['task'] as String?)?.trim() ?? '';
-      final String rawCat = (it['categoria'] ?? it['category'] ?? '')
-          .toString()
-          .toLowerCase()
-          .trim();
-      final String cat = rawCat.isEmpty ? _inferMenuCategory(task) : rawCat;
+      final String rawCat =
+          (it['categoria'] ?? it['category'] ?? it['fase'] ?? '')
+              .toString()
+              .toLowerCase()
+              .trim();
+      final String cat = _normalizeMenuBlock(
+        rawCat.isEmpty ? _inferMenuBlock(task) : rawCat,
+      );
       grouped.putIfAbsent(cat, () => <Map<String, dynamic>>[]).add(it);
     }
 
-    // Orden preferido de categorías
+    // Orden fijo de categorías como desktop
     const List<String> order = <String>[
-      'aperitivos',
-      'entrantes',
-      'primeros',
-      'segundos',
-      'postres',
-      'infantil',
+      'welcome',
+      'pausa_cafe',
+      'comida',
+      'refrescos',
       'otros',
     ];
 
-    // Mapa a etiquetas bonitas
+    // Etiquetas visuales
     String labelFor(String key) {
       switch (key) {
-        case 'aperitivos':
-          return 'Aperitivos';
-        case 'entrantes':
-          return 'Entrantes';
-        case 'primeros':
-          return 'Primeros';
-        case 'segundos':
-          return 'Segundos';
-        case 'postres':
-          return 'Postres';
-        case 'infantil':
-          return 'Menú infantil';
+        case 'welcome':
+          return 'Welcome';
+        case 'pausa_cafe':
+          return 'PAUSA CAFE';
+        case 'comida':
+          return 'COMIDA';
+        case 'refrescos':
+          return 'REFRESCOS';
         default:
           return 'Otros';
       }
@@ -2699,29 +2696,76 @@ class _MenusCard extends StatelessWidget {
     );
   }
 
-  String _inferMenuCategory(String task) {
+  // Normaliza posibles valores a las claves canónicas
+  String _normalizeMenuBlock(String raw) {
+    final String t = raw
+        .toLowerCase()
+        .replaceAll('-', ' ')
+        .replaceAll('_', ' ')
+        .trim();
+    if (t.contains('welcome') ||
+        t.contains('aperitivo') ||
+        t.contains('recepcion') ||
+        t.contains('recepción')) {
+      return 'welcome';
+    }
+    if (t.contains('pausa') ||
+        t.contains('cafe') ||
+        t.contains('caf\u00E9') ||
+        t.contains('coffee')) {
+      return 'pausa_cafe';
+    }
+    if (t.contains('comida') ||
+        t.contains('almuerzo') ||
+        t.contains('lunch') ||
+        t.contains('menu') ||
+        t.contains('men\u00FA')) {
+      return 'comida';
+    }
+    if (t.contains('refresco') ||
+        t.contains('bebida') ||
+        t.contains('drinks') ||
+        t.contains('refrescos')) {
+      return 'refrescos';
+    }
+    return 'otros';
+  }
+
+  // Inferencia por contenido del texto cuando no hay categoría explícita
+  String _inferMenuBlock(String task) {
     final String t = task.toLowerCase();
-    if (t.contains('aperitivo') || t.contains('snack') || t.contains('pica')) {
-      return 'aperitivos';
+    if (t.contains('welcome') ||
+        t.contains('aperitivo') ||
+        t.contains('recepcion') ||
+        t.contains('recepción')) {
+      return 'welcome';
     }
-    if (t.contains('entrante') || t.contains('tapa') || t.contains('starter')) {
-      return 'entrantes';
+    if (t.contains('pausa') ||
+        t.contains('cafe') ||
+        t.contains('caf\u00E9') ||
+        t.contains('coffee')) {
+      return 'pausa_cafe';
     }
-    if (t.contains('primero') || t.contains('pasta') || t.contains('sopa')) {
-      return 'primeros';
-    }
-    if (t.contains('segundo') ||
-        t.contains('carne') ||
-        t.contains('pescado') ||
+    if (t.contains('comida') ||
+        t.contains('almuerzo') ||
+        t.contains('plato') ||
+        t.contains('primer') ||
+        t.contains('segundo') ||
         t.contains('principal') ||
-        t.contains('arro')) {
-      return 'segundos';
+        t.contains('menu') ||
+        t.contains('men\u00FA') ||
+        t.contains('arro') ||
+        t.contains('carne') ||
+        t.contains('pescado')) {
+      return 'comida';
     }
-    if (t.contains('postre') || t.contains('dulce') || t.contains('dessert')) {
-      return 'postres';
-    }
-    if (t.contains('infantil') || t.contains('niñ') || t.contains('kids')) {
-      return 'infantil';
+    if (t.contains('refresco') ||
+        t.contains('bebida') ||
+        t.contains('drinks') ||
+        t.contains('agua') ||
+        t.contains('zum') ||
+        t.contains('soda')) {
+      return 'refrescos';
     }
     return 'otros';
   }
