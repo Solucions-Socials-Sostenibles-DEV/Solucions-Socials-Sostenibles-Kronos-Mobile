@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../main.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -25,7 +26,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           .from('user_profiles')
           .update(<String, dynamic>{'onboarding_completed': true})
           .eq('id', userId);
-      // AuthGate volverá a cargar el perfil y nos llevará a Ruta
+      // Navegar a la app principal
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute<void>(builder: (_) => const MainShell()),
+          (Route<dynamic> r) => false,
+        );
+      }
     } catch (e) {
       setState(() => _error = 'No se pudo completar el onboarding');
     } finally {
