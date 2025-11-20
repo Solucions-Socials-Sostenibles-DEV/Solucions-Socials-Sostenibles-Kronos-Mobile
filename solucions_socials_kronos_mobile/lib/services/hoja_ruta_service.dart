@@ -58,7 +58,7 @@ class HojaRutaService {
       final List<dynamic> data = await _client
           .from('hojas_ruta')
           .select(
-            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios',
+            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios, firma_info, firma_responsable',
           )
           .order('updated_at', ascending: false)
           .limit(1);
@@ -89,6 +89,52 @@ class HojaRutaService {
       return data.cast<Map<String, dynamic>>();
     } catch (e) {
       throw Exception('Error al obtener el histórico de hojas de ruta: $e');
+    }
+  }
+
+  /// Marca la hoja como firmada (confirmada) con el nombre del firmante
+  Future<void> firmarHojaRuta({
+    required String hojaId,
+    required String nombreFirmante,
+  }) async {
+    try {
+      final Map<String, dynamic> firmaInfo = <String, dynamic>{
+        'firmado': true,
+        'firmado_por': nombreFirmante,
+        'fecha_firma': DateTime.now().toIso8601String(),
+        'firma_data': nombreFirmante,
+      };
+
+      await _client
+          .from('hojas_ruta')
+          .update(<String, dynamic>{
+            'firma_info': firmaInfo,
+            'firma_responsable': nombreFirmante,
+          })
+          .eq('id', hojaId);
+    } catch (e) {
+      throw Exception('Error al firmar la hoja de ruta: $e');
+    }
+  }
+
+  /// Revierte la firma (desverifica) de una hoja de ruta
+  Future<void> desfirmarHojaRuta({required String hojaId}) async {
+    try {
+      final Map<String, dynamic> firmaInfo = <String, dynamic>{
+        'firmado': false,
+        'firmado_por': null,
+        'fecha_firma': null,
+        'firma_data': null,
+      };
+      await _client
+          .from('hojas_ruta')
+          .update(<String, dynamic>{
+            'firma_info': firmaInfo,
+            'firma_responsable': null,
+          })
+          .eq('id', hojaId);
+    } catch (e) {
+      throw Exception('Error al desverificar la hoja de ruta: $e');
     }
   }
 

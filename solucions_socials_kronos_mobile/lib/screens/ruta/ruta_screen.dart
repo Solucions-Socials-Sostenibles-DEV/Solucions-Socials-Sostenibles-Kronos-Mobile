@@ -301,11 +301,59 @@ class _RutaScreenState extends State<RutaScreen> {
                         ],
                       ),
                       const SizedBox(height: 14),
+                      if ((_hojaRutaActual?['firma_info'] is Map) &&
+                          ((_hojaRutaActual!['firma_info'] as Map)['firmado'] ==
+                              true)) ...<Widget>[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: primary.withOpacity(0.25),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const Icon(
+                                Icons.verified,
+                                size: 18,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Verificado por: ${((_hojaRutaActual!['firma_info'] as Map)['firmado_por'] as String?) ?? '—'}',
+                                style: const TextStyle(
+                                  color: primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       _ActionList(
                         primary: primary,
                         primaryDark: primaryDark,
-                        onTapConfirmar: () =>
-                            _showSnack('Confirmar Lista y material'),
+                        confirmDisabled:
+                            (_hojaRutaActual?['firma_info'] is Map &&
+                            ((_hojaRutaActual!['firma_info']
+                                    as Map)['firmado'] ==
+                                true)),
+                        onTapDesverificar: ((_hojaRutaActual?['firma_info']
+                                        is Map) &&
+                                    (((_hojaRutaActual!['firma_info'] as Map)[
+                                                'firmado'] ==
+                                            true)) &&
+                                    _canAddNotes)
+                                ? _desverificarListaYMaterial
+                                : null,
+                        onTapConfirmar: _confirmarListaYMaterial,
                         onTapHistorico: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -394,6 +442,138 @@ class _RutaScreenState extends State<RutaScreen> {
   void _showSnack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _confirmarListaYMaterial() async {
+    if (_hojaRutaActual?['id'] == null) return;
+    final bool yaFirmado =
+        (_hojaRutaActual?['firma_info'] is Map) &&
+        ((_hojaRutaActual!['firma_info'] as Map)['firmado'] == true);
+    if (yaFirmado) {
+      _showSnack('Ya está verificado');
+      return;
+    }
+    final TextEditingController controller = TextEditingController(
+      text: _userName ?? '',
+    );
+    final String? nombre = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        const Color primary = Color(0xFF4CAF51);
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Confirmar lista y material',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Escribe tu nombre para verificar la hoja. No se podrá editar después.',
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    hintText: 'Tu nombre',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primary, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final String name = controller.text.trim();
+                          if (name.isNotEmpty) {
+                            Navigator.of(context).pop(name);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Confirmar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (nombre == null || nombre.isEmpty) return;
+    try {
+      await _hojaRutaService.firmarHojaRuta(
+        hojaId: _hojaRutaActual!['id'] as String,
+        nombreFirmante: nombre,
+      );
+      await _loadHojaRutaActual();
+      _showSnack('Hoja verificada por $nombre');
+    } catch (e) {
+      _showSnack('No se pudo verificar: $e');
+    }
+  }
+
+  Future<void> _desverificarListaYMaterial() async {
+    if (_hojaRutaActual?['id'] == null) return;
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Desverificar hoja'),
+          content: const Text(
+            '¿Seguro que quieres desverificar esta hoja? Se permitirá editar de nuevo.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Desverificar'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm != true) return;
+    try {
+      await _hojaRutaService.desfirmarHojaRuta(
+        hojaId: _hojaRutaActual!['id'] as String,
+      );
+      await _loadHojaRutaActual();
+      _showSnack('Hoja desverificada');
+    } catch (e) {
+      _showSnack('No se pudo desverificar: $e');
+    }
   }
 
   // Subida de hoja deshabilitada en esta versión
@@ -670,12 +850,14 @@ class _ActionList extends StatelessWidget {
   const _ActionList({
     required this.primary,
     required this.primaryDark,
+    required this.confirmDisabled,
     required this.onTapConfirmar,
     required this.onTapHistorico,
   });
 
   final Color primary;
   final Color primaryDark;
+  final bool confirmDisabled;
   final VoidCallback onTapConfirmar;
   final VoidCallback onTapHistorico;
 
@@ -686,6 +868,7 @@ class _ActionList extends StatelessWidget {
         label: 'Confirmar Lista y material',
         icon: Icons.checklist_outlined,
         onTap: onTapConfirmar,
+        disabled: confirmDisabled,
       ),
       _ActionItem(
         label: 'Histórico',
@@ -703,6 +886,7 @@ class _ActionList extends StatelessWidget {
             primary: primary,
             primaryDark: primaryDark,
             onTap: items[i].onTap,
+            disabled: items[i].disabled,
           ),
           if (i != items.length - 1) const SizedBox(height: 10),
         ],
@@ -712,10 +896,16 @@ class _ActionList extends StatelessWidget {
 }
 
 class _ActionItem {
-  _ActionItem({required this.label, required this.icon, required this.onTap});
+  _ActionItem({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.disabled = false,
+  });
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final bool disabled;
 }
 
 class _ActionButton extends StatelessWidget {
@@ -725,13 +915,15 @@ class _ActionButton extends StatelessWidget {
     required this.primary,
     required this.primaryDark,
     required this.onTap,
+    this.disabled = false,
   });
 
   final String label;
   final IconData icon;
   final Color primary;
   final Color primaryDark;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -741,46 +933,49 @@ class _ActionButton extends StatelessWidget {
       colors: <Color>[primary, primaryDark],
     );
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDark ? const Color(0xFF1F2227) : Colors.white,
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 8),
+    return Opacity(
+      opacity: disabled ? 0.6 : 1.0,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: isDark ? const Color(0xFF1F2227) : Colors.white,
+          border: Border.all(
+            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.08),
           ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  gradient: gradient,
-                  borderRadius: BorderRadius.circular(10),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: disabled ? null : onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: gradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: Colors.white),
                 ),
-                child: Icon(icon, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(color: fg, fontWeight: FontWeight.w600),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(color: fg, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_right, color: fg.withOpacity(0.5)),
-            ],
+                Icon(Icons.chevron_right, color: fg.withOpacity(0.5)),
+              ],
+            ),
           ),
         ),
       ),
