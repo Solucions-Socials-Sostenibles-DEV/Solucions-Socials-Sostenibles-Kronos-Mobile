@@ -52,6 +52,7 @@ class _RutaHistoricoScreenState extends State<RutaHistoricoScreen> {
     final Color fg = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F1216) : null,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -72,9 +73,11 @@ class _RutaHistoricoScreenState extends State<RutaHistoricoScreen> {
         leadingWidth: 56,
         titleSpacing: 8,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[primary, primaryDark],
+              colors: isDark
+                  ? <Color>[const Color(0xFF0D1014), const Color(0xFF161A1F)]
+                  : <Color>[primary, primaryDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

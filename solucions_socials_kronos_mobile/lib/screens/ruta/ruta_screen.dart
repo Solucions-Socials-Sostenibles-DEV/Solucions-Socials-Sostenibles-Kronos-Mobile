@@ -191,16 +191,21 @@ class _RutaScreenState extends State<RutaScreen> {
   Widget build(BuildContext context) {
     const Color primary = Color(0xFF4CAF51);
     const Color primaryDark = Color(0xFF3C8E41);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: isDark
+          ? const Color(0xFF0F1216)
+          : const Color(0xFFF7F9FB),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         toolbarHeight: 80,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[primary, primaryDark],
+              colors: isDark
+                  ? <Color>[const Color(0xFF0D1014), const Color(0xFF161A1F)]
+                  : <Color>[primary, primaryDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

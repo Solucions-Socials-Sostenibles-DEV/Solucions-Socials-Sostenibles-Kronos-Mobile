@@ -19,7 +19,7 @@ class SettingsScreen extends StatelessWidget {
     final bool isDark = controller.isDark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: isDark ? const Color(0xFF0F1216) : const Color(0xFFF7F9FB),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -39,9 +39,11 @@ class SettingsScreen extends StatelessWidget {
         leadingWidth: 56,
         titleSpacing: 8,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[primary, primaryDark],
+              colors: isDark
+                  ? <Color>[const Color(0xFF0D1014), const Color(0xFF161A1F)]
+                  : <Color>[primary, primaryDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
