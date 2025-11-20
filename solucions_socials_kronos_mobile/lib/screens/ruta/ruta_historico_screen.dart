@@ -57,6 +57,7 @@ class _RutaHistoricoScreenState extends State<RutaHistoricoScreen> {
         backgroundColor: Colors.transparent,
         toolbarHeight: 80,
         centerTitle: false,
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: Center(
@@ -101,6 +102,14 @@ class _RutaHistoricoScreenState extends State<RutaHistoricoScreen> {
           ],
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Volver',
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.arrow_back_ios_new),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
