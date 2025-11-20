@@ -141,7 +141,9 @@ class _UserScreenState extends State<UserScreen> {
     final Color fg = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: isDark
+          ? const Color(0xFF0F1216)
+          : const Color(0xFFF7F9FB),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -161,9 +163,11 @@ class _UserScreenState extends State<UserScreen> {
         leadingWidth: 56,
         titleSpacing: 8,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[primary, primaryDark],
+              colors: isDark
+                  ? <Color>[const Color(0xFF0D1014), const Color(0xFF161A1F)]
+                  : <Color>[primary, primaryDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -757,9 +761,11 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Solo administradores y jefes pueden cambiar el rol.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : Colors.black54,
+                  ),
                 ),
               ),
             const SizedBox(height: 24),
