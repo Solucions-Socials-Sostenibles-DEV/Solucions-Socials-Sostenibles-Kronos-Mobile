@@ -345,14 +345,14 @@ class _RutaScreenState extends State<RutaScreen> {
                             ((_hojaRutaActual!['firma_info']
                                     as Map)['firmado'] ==
                                 true)),
-                        onTapDesverificar: ((_hojaRutaActual?['firma_info']
-                                        is Map) &&
-                                    (((_hojaRutaActual!['firma_info'] as Map)[
-                                                'firmado'] ==
-                                            true)) &&
-                                    _canAddNotes)
-                                ? _desverificarListaYMaterial
-                                : null,
+                        onTapDesverificar:
+                            ((_hojaRutaActual?['firma_info'] is Map) &&
+                                (((_hojaRutaActual!['firma_info']
+                                        as Map)['firmado'] ==
+                                    true)) &&
+                                _canAddNotes)
+                            ? _desverificarListaYMaterial
+                            : null,
                         onTapConfirmar: _confirmarListaYMaterial,
                         onTapHistorico: () {
                           Navigator.of(context).push(
@@ -851,6 +851,7 @@ class _ActionList extends StatelessWidget {
     required this.primary,
     required this.primaryDark,
     required this.confirmDisabled,
+    this.onTapDesverificar,
     required this.onTapConfirmar,
     required this.onTapHistorico,
   });
@@ -858,6 +859,7 @@ class _ActionList extends StatelessWidget {
   final Color primary;
   final Color primaryDark;
   final bool confirmDisabled;
+  final VoidCallback? onTapDesverificar;
   final VoidCallback onTapConfirmar;
   final VoidCallback onTapHistorico;
 
@@ -870,6 +872,12 @@ class _ActionList extends StatelessWidget {
         onTap: onTapConfirmar,
         disabled: confirmDisabled,
       ),
+      if (onTapDesverificar != null)
+        _ActionItem(
+          label: 'Desverificar',
+          icon: Icons.remove_done,
+          onTap: onTapDesverificar!,
+        ),
       _ActionItem(
         label: 'Histórico',
         icon: Icons.history,
