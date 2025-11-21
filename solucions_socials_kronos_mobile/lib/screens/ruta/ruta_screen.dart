@@ -385,7 +385,6 @@ class _RutaScreenState extends State<RutaScreen> {
                   loading: _loadingPersonal,
                   onRefresh: _loadPersonal,
                   onEditarHoras: _editarHorasPersonal,
-                  onVerDatos: _verDatosEmpleado,
                   primary: primary,
                   canEdit: _canEditPersonal,
                 ),
@@ -807,9 +806,6 @@ class _RutaScreenState extends State<RutaScreen> {
     }
   }
 
-  void _verDatosEmpleado(Map<String, dynamic> empleado) {
-    _showSnack('Ver datos de ${empleado['nombre']} (próximamente)');
-  }
 
   bool get _estaFirmada {
     final dynamic rawInfo = _hojaRutaActual?['firma_info'];
@@ -2180,7 +2176,6 @@ class _PersonalCard extends StatelessWidget {
     required this.loading,
     required this.onRefresh,
     required this.onEditarHoras,
-    required this.onVerDatos,
     required this.primary,
     required this.canEdit,
   });
@@ -2189,7 +2184,6 @@ class _PersonalCard extends StatelessWidget {
   final bool loading;
   final VoidCallback onRefresh;
   final Function(Map<String, dynamic>) onEditarHoras;
-  final Function(Map<String, dynamic>) onVerDatos;
   final Color primary;
   final bool canEdit;
 
@@ -2312,7 +2306,6 @@ class _PersonalCard extends StatelessWidget {
                   _PersonalItem(
                     empleado: personal[i],
                     onEditarHoras: () => onEditarHoras(personal[i]),
-                    onVerDatos: () => onVerDatos(personal[i]),
                     primary: primary,
                     isDark: isDark,
                     fg: fg,
@@ -2332,7 +2325,6 @@ class _PersonalItem extends StatelessWidget {
   const _PersonalItem({
     required this.empleado,
     required this.onEditarHoras,
-    required this.onVerDatos,
     required this.primary,
     required this.isDark,
     required this.fg,
@@ -2341,7 +2333,6 @@ class _PersonalItem extends StatelessWidget {
 
   final Map<String, dynamic> empleado;
   final VoidCallback onEditarHoras;
-  final VoidCallback onVerDatos;
   final Color primary;
   final bool isDark;
   final Color fg;
@@ -2410,18 +2401,6 @@ class _PersonalItem extends StatelessWidget {
                     ],
                   ),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Botón Ver Datos
-          IconButton(
-            icon: const Icon(Icons.info_outline, size: 20),
-            onPressed: onVerDatos,
-            tooltip: 'Ver datos',
-            color: primary,
-            style: IconButton.styleFrom(
-              backgroundColor: primary.withOpacity(0.1),
-              padding: const EdgeInsets.all(8),
             ),
           ),
           const SizedBox(width: 8),
