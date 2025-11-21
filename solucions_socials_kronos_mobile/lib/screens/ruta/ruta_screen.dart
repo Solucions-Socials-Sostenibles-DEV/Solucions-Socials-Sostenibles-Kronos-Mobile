@@ -14,7 +14,10 @@ class RutaScreen extends StatefulWidget {
   State<RutaScreen> createState() => _RutaScreenState();
 }
 
-class _RutaScreenState extends State<RutaScreen> {
+class _RutaScreenState extends State<RutaScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
   late final AuthService _authService;
   late final HojaRutaService _hojaRutaService;
   int _totalHojasRuta = 0;
@@ -46,9 +49,17 @@ class _RutaScreenState extends State<RutaScreen> {
     super.initState();
     _authService = AuthService(Supabase.instance.client);
     _hojaRutaService = HojaRutaService(Supabase.instance.client);
+    _tabController = TabController(length: 4, vsync: this);
     _loadUserRole();
+    _loadPersonal();
     _loadEstadisticas();
     _loadHojaRutaActual();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserRole() async {
@@ -409,7 +420,9 @@ class _RutaScreenState extends State<RutaScreen> {
                   onToggle: _toggleChecklistItem,
                   onChangePriority: _changeChecklistPriority,
                   primary: primary,
+                  tabController: _tabController,
                 ),
+
                 const SizedBox(height: 16),
                 // Apartado: Equipamientos y Material
                 _EquipamientosMaterialCard(
@@ -1211,7 +1224,9 @@ class _ChecklistCard extends StatelessWidget {
     required this.onToggle,
     required this.onChangePriority,
     required this.primary,
+    required this.tabController,
   });
+
 
   final bool loading;
   final List<Map<String, dynamic>> generalPre;
@@ -1235,6 +1250,7 @@ class _ChecklistCard extends StatelessWidget {
   })
   onChangePriority;
   final Color primary;
+  final TabController tabController;
 
   @override
   Widget build(BuildContext context) {
@@ -1287,62 +1303,63 @@ class _ChecklistCard extends StatelessWidget {
               ),
             )
           else
-            DefaultTabController(
-              length: 4,
-              child: Column(
-                children: <Widget>[
-                  TabBar(
-                    isScrollable: false,
-                    labelColor: primary,
-                    indicatorColor: primary,
-                    labelStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    unselectedLabelStyle: const TextStyle(fontSize: 12),
-                    tabs: const <Widget>[
-                      Tab(text: 'General'),
-                      Tab(text: 'Equipo'),
-                      Tab(text: 'Menús'),
-                      Tab(text: 'Bebidas'),
+
+            Column(
+              children: <Widget>[
+                TabBar(
+                  controller: tabController,
+                  isScrollable: false,
+                  labelColor: primary,
+                  indicatorColor: primary,
+                  labelStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: const TextStyle(fontSize: 12),
+                  tabs: const <Widget>[
+                    Tab(text: 'General'),
+                    Tab(text: 'Equipo'),
+                    Tab(text: 'Menús'),
+                    Tab(text: 'Bebidas'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 360,
+                  child: TabBarView(
+                    controller: tabController,
+                    children: <Widget>[
+                      _GeneralChecklist(
+                        pre: generalPre,
+                        durante: generalDurante,
+                        post: generalPost,
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
+                      _SimpleChecklist(
+                        items: equipamiento,
+                        tipo: 'equipamiento',
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
+                      _SimpleChecklist(
+                        items: menus,
+                        tipo: 'menus',
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
+                      _SimpleChecklist(
+                        items: bebidas,
+                        tipo: 'bebidas',
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 360,
-                    child: TabBarView(
-                      children: <Widget>[
-                        _GeneralChecklist(
-                          pre: generalPre,
-                          durante: generalDurante,
-                          post: generalPost,
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                        _SimpleChecklist(
-                          items: equipamiento,
-                          tipo: 'equipamiento',
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                        _SimpleChecklist(
-                          items: menus,
-                          tipo: 'menus',
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                        _SimpleChecklist(
-                          items: bebidas,
-                          tipo: 'bebidas',
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+
         ],
       ),
     );
