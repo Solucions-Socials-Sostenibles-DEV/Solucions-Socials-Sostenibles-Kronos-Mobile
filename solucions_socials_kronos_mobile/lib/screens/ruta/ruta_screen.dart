@@ -419,6 +419,7 @@ class _RutaScreenState extends State<RutaScreen>
                   bebidas: _ckBebidas,
                   onToggle: _toggleChecklistItem,
                   onChangePriority: _changeChecklistPriority,
+                  onRefresh: _loadChecklist,
                   primary: primary,
                   tabController: _tabController,
                 ),
@@ -1223,6 +1224,7 @@ class _ChecklistCard extends StatelessWidget {
     required this.bebidas,
     required this.onToggle,
     required this.onChangePriority,
+    required this.onRefresh,
     required this.primary,
     required this.tabController,
   });
@@ -1249,6 +1251,7 @@ class _ChecklistCard extends StatelessWidget {
     required String priority,
   })
   onChangePriority;
+  final VoidCallback onRefresh;
   final Color primary;
   final TabController tabController;
 
@@ -1291,6 +1294,18 @@ class _ChecklistCard extends StatelessWidget {
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                onPressed: loading ? null : onRefresh,
+                tooltip: 'Actualizar checklist',
               ),
             ],
           ),
