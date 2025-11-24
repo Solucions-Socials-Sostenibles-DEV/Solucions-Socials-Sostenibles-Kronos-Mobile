@@ -14,7 +14,10 @@ class RutaScreen extends StatefulWidget {
   State<RutaScreen> createState() => _RutaScreenState();
 }
 
-class _RutaScreenState extends State<RutaScreen> {
+class _RutaScreenState extends State<RutaScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
   late final AuthService _authService;
   late final HojaRutaService _hojaRutaService;
   int _totalHojasRuta = 0;
@@ -46,9 +49,17 @@ class _RutaScreenState extends State<RutaScreen> {
     super.initState();
     _authService = AuthService(Supabase.instance.client);
     _hojaRutaService = HojaRutaService(Supabase.instance.client);
+    _tabController = TabController(length: 4, vsync: this);
     _loadUserRole();
+    _loadPersonal();
     _loadEstadisticas();
     _loadHojaRutaActual();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserRole() async {
@@ -385,7 +396,6 @@ class _RutaScreenState extends State<RutaScreen> {
                   loading: _loadingPersonal,
                   onRefresh: _loadPersonal,
                   onEditarHoras: _editarHorasPersonal,
-                  onVerDatos: _verDatosEmpleado,
                   primary: primary,
                   canEdit: _canEditPersonal,
                 ),
@@ -410,7 +420,9 @@ class _RutaScreenState extends State<RutaScreen> {
                   onToggle: _toggleChecklistItem,
                   onChangePriority: _changeChecklistPriority,
                   primary: primary,
+                  tabController: _tabController,
                 ),
+
                 const SizedBox(height: 16),
                 // Apartado: Equipamientos y Material
                 _EquipamientosMaterialCard(
@@ -807,9 +819,6 @@ class _RutaScreenState extends State<RutaScreen> {
     }
   }
 
-  void _verDatosEmpleado(Map<String, dynamic> empleado) {
-    _showSnack('Ver datos de ${empleado['nombre']} (próximamente)');
-  }
 
   bool get _estaFirmada {
     final dynamic rawInfo = _hojaRutaActual?['firma_info'];
@@ -1215,7 +1224,9 @@ class _ChecklistCard extends StatelessWidget {
     required this.onToggle,
     required this.onChangePriority,
     required this.primary,
+    required this.tabController,
   });
+
 
   final bool loading;
   final List<Map<String, dynamic>> generalPre;
@@ -1239,6 +1250,7 @@ class _ChecklistCard extends StatelessWidget {
   })
   onChangePriority;
   final Color primary;
+  final TabController tabController;
 
   @override
   Widget build(BuildContext context) {
@@ -1291,62 +1303,63 @@ class _ChecklistCard extends StatelessWidget {
               ),
             )
           else
-            DefaultTabController(
-              length: 4,
-              child: Column(
-                children: <Widget>[
-                  TabBar(
-                    isScrollable: false,
-                    labelColor: primary,
-                    indicatorColor: primary,
-                    labelStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    unselectedLabelStyle: const TextStyle(fontSize: 12),
-                    tabs: const <Widget>[
-                      Tab(text: 'General'),
-                      Tab(text: 'Equipo'),
-                      Tab(text: 'Menús'),
-                      Tab(text: 'Bebidas'),
+
+            Column(
+              children: <Widget>[
+                TabBar(
+                  controller: tabController,
+                  isScrollable: false,
+                  labelColor: primary,
+                  indicatorColor: primary,
+                  labelStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: const TextStyle(fontSize: 12),
+                  tabs: const <Widget>[
+                    Tab(text: 'General'),
+                    Tab(text: 'Equipo'),
+                    Tab(text: 'Menús'),
+                    Tab(text: 'Bebidas'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 360,
+                  child: TabBarView(
+                    controller: tabController,
+                    children: <Widget>[
+                      _GeneralChecklist(
+                        pre: generalPre,
+                        durante: generalDurante,
+                        post: generalPost,
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
+                      _SimpleChecklist(
+                        items: equipamiento,
+                        tipo: 'equipamiento',
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
+                      _SimpleChecklist(
+                        items: menus,
+                        tipo: 'menus',
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
+                      _SimpleChecklist(
+                        items: bebidas,
+                        tipo: 'bebidas',
+                        onToggle: onToggle,
+                        onChangePriority: onChangePriority,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 360,
-                    child: TabBarView(
-                      children: <Widget>[
-                        _GeneralChecklist(
-                          pre: generalPre,
-                          durante: generalDurante,
-                          post: generalPost,
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                        _SimpleChecklist(
-                          items: equipamiento,
-                          tipo: 'equipamiento',
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                        _SimpleChecklist(
-                          items: menus,
-                          tipo: 'menus',
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                        _SimpleChecklist(
-                          items: bebidas,
-                          tipo: 'bebidas',
-                          onToggle: onToggle,
-                          onChangePriority: onChangePriority,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+
         ],
       ),
     );
@@ -2180,7 +2193,6 @@ class _PersonalCard extends StatelessWidget {
     required this.loading,
     required this.onRefresh,
     required this.onEditarHoras,
-    required this.onVerDatos,
     required this.primary,
     required this.canEdit,
   });
@@ -2189,7 +2201,6 @@ class _PersonalCard extends StatelessWidget {
   final bool loading;
   final VoidCallback onRefresh;
   final Function(Map<String, dynamic>) onEditarHoras;
-  final Function(Map<String, dynamic>) onVerDatos;
   final Color primary;
   final bool canEdit;
 
@@ -2312,7 +2323,6 @@ class _PersonalCard extends StatelessWidget {
                   _PersonalItem(
                     empleado: personal[i],
                     onEditarHoras: () => onEditarHoras(personal[i]),
-                    onVerDatos: () => onVerDatos(personal[i]),
                     primary: primary,
                     isDark: isDark,
                     fg: fg,
@@ -2332,7 +2342,6 @@ class _PersonalItem extends StatelessWidget {
   const _PersonalItem({
     required this.empleado,
     required this.onEditarHoras,
-    required this.onVerDatos,
     required this.primary,
     required this.isDark,
     required this.fg,
@@ -2341,7 +2350,6 @@ class _PersonalItem extends StatelessWidget {
 
   final Map<String, dynamic> empleado;
   final VoidCallback onEditarHoras;
-  final VoidCallback onVerDatos;
   final Color primary;
   final bool isDark;
   final Color fg;
@@ -2410,18 +2418,6 @@ class _PersonalItem extends StatelessWidget {
                     ],
                   ),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Botón Ver Datos
-          IconButton(
-            icon: const Icon(Icons.info_outline, size: 20),
-            onPressed: onVerDatos,
-            tooltip: 'Ver datos',
-            color: primary,
-            style: IconButton.styleFrom(
-              backgroundColor: primary.withOpacity(0.1),
-              padding: const EdgeInsets.all(8),
             ),
           ),
           const SizedBox(width: 8),
