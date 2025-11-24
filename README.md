@@ -141,35 +141,37 @@ flutter build ios        # iOS
 
 Ver [ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalles técnicos.
 
-## 📦 Instalación mediante APK (GitHub Releases)
+## 📦 Instalación de la app en Android (APK desde GitHub Releases)
 
-Esta es la vía recomendada para testers internos en Android.
+Guía para usuarios y testers que van a instalar la app.
 
-1) Descargar la APK
-- Accede a la sección “Releases” del repositorio en GitHub.
-- Descarga el archivo `app-release.apk` (o similar) del último release publicado.
+1) Descargar la app
+- Entra en la página de “Releases” del proyecto en GitHub.
+- Abre la versión más reciente (arriba de la lista).
+- Descarga el archivo APK adjunto (por ejemplo, `app-release.apk`).
 
-2) Permitir instalación desde orígenes desconocidos (una vez)
-- En tu Android: Ajustes → Seguridad/Privacidad → Instalar apps desconocidas.
-- Autoriza el navegador/gestor de archivos que uses para abrir la APK.
+2) Permitir la instalación (solo la primera vez)
+- En tu móvil Android ve a: Ajustes → Seguridad/Privacidad → Instalar apps desconocidas.
+- Elige el navegador o gestor de archivos que uses (Chrome, Archivos, Drive…) y activa “Permitir”.
 
-3) Instalar
-- Abre la APK descargada y confirma la instalación.
-- Si Play Protect muestra una advertencia, pulsa “Instalar de todas formas” (APK de confianza interna).
+3) Instalar la app
+- Toca el archivo APK descargado y pulsa “Instalar”.
+- Si aparece un aviso de Play Protect, pulsa “Más detalles” → “Instalar de todos modos”.
 
-4) Iniciar sesión
-- Abre la app, inicia sesión con tu usuario de pruebas de Supabase.
-- Si el usuario es nuevo, completa el Onboarding (quedará registrado en BD).
+4) Abrir e iniciar sesión
+- Abre “SSS Kronos Mobile”.
+- Inicia sesión con tu usuario y contraseña.
+- Si es tu primera vez, completa el tutorial inicial; quedará guardado automáticamente.
 
-5) Actualizaciones
-- Para nuevas versiones, repite el proceso descargando la última APK del release más reciente.
+5) Actualizar a nuevas versiones
+- Repite este proceso descargando el APK de la última versión publicada en “Releases”.
 
-Problemas comunes
-- “App no instalada”: elimina una versión anterior o verifica que la arquitectura del dispositivo esté soportada (arm64-v8a).
-- Conexión a BD: asegúrate de que la build incluya las `--dart-define` de Supabase (URL y anon key) correctas.
-- Play Protect: puede advertir en builds internas; confirma instalación manualmente.
+Ayuda rápida
+- “App no instalada”: libera espacio, desinstala una versión anterior o reinicia el dispositivo.
+- “No encuentro el archivo”: revisa la carpeta Descargas o abre el gestor de archivos.
+- Dispositivo no compatible: se requiere Android 8.0 o superior y, en la mayoría de casos, arquitectura arm64.
 
-## ⬆️ Publicación del APK en GitHub Releases (manual)
+## ⬆️ Para administradores: publicar el APK en GitHub Releases (manual)
 
 1) Generar build de release
 ```bash
