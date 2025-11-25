@@ -102,7 +102,50 @@ class _RutaScreenState extends State<RutaScreen>
 
     try {
       final hojaRutaId = _hojaRutaActual!['id'] as String;
-      final personal = await _hojaRutaService.getPersonalHojaRuta(hojaRutaId);
+      final List<Map<String, dynamic>> personalDb =
+          await _hojaRutaService.getPersonalHojaRuta(hojaRutaId);
+
+      // Nombres provenientes del texto original (Excel) para garantizar presencia con 0 horas
+      final String? rawPersonalText =
+          _hojaRutaActual?['personal_text'] as String?; // "Nombre1+Nombre2+..."
+      final List<String> nombresDesdeTexto = rawPersonalText == null
+          ? <String>[]
+          : rawPersonalText
+              .split(RegExp(r'[+\n,;]'))
+              .map((String s) => s.trim())
+              .where((String s) => s.isNotEmpty)
+              .toList();
+
+      // Índice de existentes por nombre normalizado
+      String normalize(String s) => s.trim().toLowerCase();
+      final Set<String> existentes = personalDb
+          .map((Map<String, dynamic> e) => normalize((e['nombre'] as String?) ?? ''))
+          .toSet();
+
+      // Agregar faltantes con 0 horas
+      final List<Map<String, dynamic>> faltantes = <Map<String, dynamic>>[];
+      for (final String nombre in nombresDesdeTexto) {
+        final String key = normalize(nombre);
+        if (key.isEmpty) continue;
+        if (!existentes.contains(key)) {
+          faltantes.add(<String, dynamic>{
+            'id': null,
+            'nombre': nombre,
+            'horas': 0.0,
+            'empleado_id': null,
+          });
+        }
+      }
+
+      // Mezclar y ordenar por nombre
+      final List<Map<String, dynamic>> personal =
+          <Map<String, dynamic>>[...personalDb, ...faltantes]
+            ..sort((a, b) {
+              final String an = (a['nombre'] as String? ?? '').toLowerCase();
+              final String bn = (b['nombre'] as String? ?? '').toLowerCase();
+              return an.compareTo(bn);
+            });
+
       if (mounted) {
         setState(() {
           _personal = personal;
@@ -795,7 +838,7 @@ class _RutaScreenState extends State<RutaScreen>
       _showSnack('No tienes permisos para editar horas');
       return;
     }
-    final String personalId = empleado['id'] as String;
+    final String? personalId = empleado['id'] as String?;
     final String nombre = empleado['nombre'] as String;
     final double horasActuales = (empleado['horas'] as num?)?.toDouble() ?? 0.0;
 
@@ -807,7 +850,17 @@ class _RutaScreenState extends State<RutaScreen>
 
     if (result != null && result != horasActuales) {
       try {
-        await _hojaRutaService.actualizarHorasPersonal(personalId, result);
+        if (_hojaRutaActual?['id'] == null) return;
+        if (personalId != null && personalId.isNotEmpty) {
+          await _hojaRutaService.actualizarHorasPersonal(personalId, result);
+        } else {
+          // Crear/actualizar el registro si no existía (aparece desde personal_text)
+          await _hojaRutaService.upsertPersonalHojaRuta(
+            hojaRutaId: _hojaRutaActual!['id'] as String,
+            nombre: nombre,
+            horas: result,
+          );
+        }
         if (mounted) {
           _showSnack('Horas actualizadas correctamente');
           await _loadPersonal();

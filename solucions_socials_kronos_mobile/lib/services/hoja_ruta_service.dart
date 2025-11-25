@@ -58,7 +58,7 @@ class HojaRutaService {
       final List<dynamic> data = await _client
           .from('hojas_ruta')
           .select(
-            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios, firma_info, firma_responsable',
+            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios, firma_info, firma_responsable, personal_text',
           )
           .order('fecha_servicio', ascending: false)
           .limit(1);
@@ -78,7 +78,7 @@ class HojaRutaService {
       final Map<String, dynamic>? data = await _client
           .from('hojas_ruta')
           .select(
-            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios, firma_info, firma_responsable',
+            'id, fecha_servicio, cliente, contacto, direccion, transportista, responsable, num_personas, notas, horarios, firma_info, firma_responsable, personal_text',
           )
           .eq('id', hojaId)
           .maybeSingle();
@@ -159,6 +159,28 @@ class HojaRutaService {
           .eq('id', personalId);
     } catch (e) {
       throw Exception('Error al actualizar las horas: $e');
+    }
+  }
+
+  /// Crea o actualiza (upsert) un registro de personal por hoja y nombre
+  Future<Map<String, dynamic>?> upsertPersonalHojaRuta({
+    required String hojaRutaId,
+    required String nombre,
+    required double horas,
+  }) async {
+    try {
+      final List<dynamic> rows = await _client
+          .from('hojas_ruta_personal')
+          .upsert(<String, dynamic>{
+            'hoja_ruta_id': hojaRutaId,
+            'nombre': nombre,
+            'horas': horas,
+          }, onConflict: 'hoja_ruta_id,nombre')
+          .select()
+          .limit(1);
+      return rows.isNotEmpty ? rows.first as Map<String, dynamic> : null;
+    } catch (e) {
+      throw Exception('Error al crear/actualizar el personal: $e');
     }
   }
 
