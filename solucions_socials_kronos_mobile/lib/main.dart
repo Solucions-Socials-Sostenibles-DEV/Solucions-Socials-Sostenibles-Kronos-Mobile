@@ -74,7 +74,7 @@ class _AuthGateState extends State<AuthGate> {
       final bool wasLoggedOut = _session == null && state.session != null;
       setState(() {
         _session = state.session;
-        // Si el usuario acaba de hacer login, mostrar pantalla de bienvenida
+        // Si el usuario acaba de terminar de logguearse
         if (wasLoggedOut && state.session != null) {
           _showWelcome = true;
         }

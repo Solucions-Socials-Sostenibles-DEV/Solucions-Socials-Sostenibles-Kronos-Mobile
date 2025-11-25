@@ -2,9 +2,35 @@
 
 Aplicación móvil Flutter para la gestión de **Hojas de Ruta** del sistema SSS Kronos.
 
+> ✅ **Versión 1.0 - Lista para Producción**  
+> 📥 **[Descargar APK](#-descargar-e-instalar-la-app)** _(pendiente de publicar)_ | 📖 **[Manual de Usuario](https://docs.google.com/document/d/1VyEojHDf-NtNp4Ufff_hr-TpM_tW7enjEtEMNN7hdHk/edit?usp=sharing)**
+
+---
+
+## 📑 Índice
+
+- [🎯 Descripción](#-descripción)
+- [📥 Descargar e Instalar](#-descargar-e-instalar-la-app)
+- [📚 Documentación](#-documentación)
+- [✨ Funcionalidades](#-funcionalidades)
+- [🚀 Inicio Rápido (Desarrolladores)](#-inicio-rápido)
+- [🔧 Generar y Publicar APK](#-para-administradores-generar-y-publicar-el-apk)
+- [📋 Estado del Proyecto](#-estado-del-proyecto)
+
+---
+
 ## 🎯 Descripción
 
 Aplicación Flutter (iOS/Android) para consultar y operar con las Hojas de Ruta, sincronizada en tiempo real con la app Desktop (Supabase).
+
+**Características principales:**
+- ✨ Gestión completa de hojas de ruta en tiempo real
+- 👥 Sistema de permisos por roles (Admin, Gestión, Jefe)
+- ✅ Checklist de servicio con categorías y prioridades
+- 📝 Confirmación digital con firma
+- 📊 Histórico de hojas de ruta
+- 🌓 Modo oscuro
+- 📱 Optimizada para dispositivos móviles
 
 ## 🔗 Repositorios Relacionados
 
@@ -47,6 +73,12 @@ flutter run
 Ver [SETUP.md](docs/SETUP.md) para instrucciones detalladas.
 
 ## 📚 Documentación
+
+### Para Usuarios
+
+- **[Manual de Usuario](https://docs.google.com/document/d/1VyEojHDf-NtNp4Ufff_hr-TpM_tW7enjEtEMNN7hdHk/edit?usp=sharing)** - Guía completa de uso de la aplicación
+
+### Para Desarrolladores
 
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Arquitectura y diseño del sistema
 - [SETUP.md](docs/SETUP.md) - Guía de instalación y configuración
@@ -128,7 +160,11 @@ flutter build ios        # iOS
 
 ## 📋 Estado del Proyecto
 
-### Fase actual: Lista para QA/Testing
+### ✅ Versión 1.0 - Lista para Producción
+
+La aplicación está **lista para ser desplegada** en producción. Todas las funcionalidades principales han sido implementadas y probadas.
+
+#### Funcionalidades Completadas
 
 - [x] Autenticación y Onboarding
 - [x] Hoja de Ruta: Notas, Horarios, Checklist, Material, Menús, Bebidas
@@ -136,65 +172,112 @@ flutter build ios        # iOS
 - [x] Histórico (excluye hoja más reciente)
 - [x] Modo oscuro revisado (Ruta, Ajustes, Usuario)
 - [x] Ajustes y Perfil de usuario
-- [x] Eliminadas funciones no requeridas (parser CSV local, des‑verificar, ficha empleado)
-- [x] Documentación actualizada y guía de instalación vía APK
+- [x] Sistema de permisos por roles (admin, management, manager)
+- [x] Sincronización en tiempo real con Desktop
+- [x] Mensajes de estado cuando no hay datos cargados
+- [x] Documentación técnica completa
 
 Ver [ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalles técnicos.
 
-## 📦 Instalación de la app en Android (APK desde GitHub Releases)
+## 📦 Descargar e Instalar la App
 
-Guía para usuarios y testers que van a instalar la app.
+### 📥 Descarga la última versión
 
-1) Descargar la app
-- Entra en la página de “Releases” del proyecto en GitHub.
-- Abre la versión más reciente (arriba de la lista).
-- Descarga el archivo APK adjunto (por ejemplo, `app-release.apk`).
+**APK para Android:**  
+> 🔗 **[Descargar APK aquí]** _(pendiente de publicar)_
 
-2) Permitir la instalación (solo la primera vez)
-- En tu móvil Android ve a: Ajustes → Seguridad/Privacidad → Instalar apps desconocidas.
-- Elige el navegador o gestor de archivos que uses (Chrome, Archivos, Drive…) y activa “Permitir”.
+La aplicación se distribuye mediante archivo APK para dispositivos Android. Una vez generada, el enlace estará disponible aquí.
 
-3) Instalar la app
-- Toca el archivo APK descargado y pulsa “Instalar”.
-- Si aparece un aviso de Play Protect, pulsa “Más detalles” → “Instalar de todos modos”.
+---
 
-4) Abrir e iniciar sesión
-- Abre “SSS Kronos Mobile”.
-- Inicia sesión con tu usuario y contraseña.
-- Si es tu primera vez, completa el tutorial inicial; quedará guardado automáticamente.
+### 📱 Guía de Instalación para Usuarios
 
-5) Actualizar a nuevas versiones
-- Repite este proceso descargando el APK de la última versión publicada en “Releases”.
+#### 1️⃣ Descargar la app
+- Descarga el archivo APK desde el enlace de arriba usando tu móvil Android.
+- También puedes acceder a la sección **[Releases](../../releases)** de este repositorio y descargar el archivo `app-release.apk` de la versión más reciente.
 
-Ayuda rápida
-- “App no instalada”: libera espacio, desinstala una versión anterior o reinicia el dispositivo.
-- “No encuentro el archivo”: revisa la carpeta Descargas o abre el gestor de archivos.
-- Dispositivo no compatible: se requiere Android 8.0 o superior y, en la mayoría de casos, arquitectura arm64.
+#### 2️⃣ Permitir la instalación (solo la primera vez)
+- En tu móvil Android ve a: **Ajustes → Seguridad/Privacidad → Instalar apps desconocidas**.
+- Elige el navegador o gestor de archivos que uses (Chrome, Archivos, Drive…) y activa **"Permitir"**.
 
-## ⬆️ Para administradores: publicar el APK en GitHub Releases (manual)
+#### 3️⃣ Instalar la app
+- Toca el archivo APK descargado y pulsa **"Instalar"**.
+- Si aparece un aviso de Play Protect, pulsa **"Más detalles" → "Instalar de todos modos"**.
 
-1) Generar build de release
+#### 4️⃣ Abrir e iniciar sesión
+- Abre **"SSS Kronos Mobile"**.
+- Inicia sesión con tu usuario y contraseña proporcionados por el administrador.
+- Si es tu primera vez, completa el tutorial inicial; tu progreso quedará guardado automáticamente.
+
+#### 5️⃣ Actualizar a nuevas versiones
+- Repite este proceso descargando el APK de la última versión publicada.
+- La app te notificará cuando haya actualizaciones disponibles.
+
+---
+
+### 🆘 Ayuda Rápida
+
+| Problema | Solución |
+|----------|----------|
+| "App no instalada" | Libera espacio, desinstala una versión anterior o reinicia el dispositivo |
+| "No encuentro el archivo" | Revisa la carpeta **Descargas** o abre el gestor de archivos |
+| Dispositivo no compatible | Se requiere **Android 8.0 o superior** (arm64) |
+| No puedo iniciar sesión | Contacta con el administrador para verificar tus credenciales |
+
+---
+
+### 📖 Manual de Usuario
+
+Para aprender a usar todas las funcionalidades de la app, consulta el **[Manual de Usuario completo](https://docs.google.com/document/d/1VyEojHDf-NtNp4Ufff_hr-TpM_tW7enjEtEMNN7hdHk/edit?usp=sharing)**.
+
+## 🔧 Para Administradores: Generar y Publicar el APK
+
+### 1️⃣ Generar el APK de Release
+
 ```bash
 cd solucions_socials_kronos_mobile
 flutter clean
 flutter pub get
 flutter build apk --release \
-  --dart-define=SUPABASE_URL=https://<tu>.supabase.co \
+  --dart-define=SUPABASE_URL=https://<tu-proyecto>.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=<tu_anon_key> \
   --dart-define=GITHUB_REPO_OWNER=<owner> \
   --dart-define=GITHUB_REPO_NAME=<repo>
 ```
-- La APK se genera en: `build/app/outputs/flutter-apk/app-release.apk`
 
-2) Crear un Release en GitHub
-- Título: vX.Y.Z
-- Notas: cambios relevantes (changelog resumido)
-- Adjunta `app-release.apk` como asset.
-- Publica el release.
+El APK se generará en: `build/app/outputs/flutter-apk/app-release.apk`
 
-Sugerencia (opcional): Automatizar con GitHub Actions
-- Workflow que haga `flutter build apk --release` con caché y suba el artifact al release.
-- Requiere secrets con `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+### 2️⃣ Publicar en GitHub Releases
+
+1. Ve a la sección **[Releases](../../releases)** del repositorio
+2. Haz clic en **"Create a new release"**
+3. Configura el release:
+   - **Tag**: `v1.0.0` (o la versión correspondiente)
+   - **Título**: `SSS Kronos Mobile v1.0.0`
+   - **Descripción**: Incluye el changelog con los cambios principales
+4. Arrastra el archivo `app-release.apk` a la sección de assets
+5. Marca como "Latest release" si es la versión estable más reciente
+6. Haz clic en **"Publish release"**
+
+### 3️⃣ Actualizar el README
+
+Después de publicar el release, actualiza el enlace de descarga en este README:
+
+```markdown
+**APK para Android:**  
+> 🔗 **[Descargar SSS Kronos Mobile v1.0.0](../../releases/download/v1.0.0/app-release.apk)**
+```
+
+### 🤖 Opcional: Automatización con GitHub Actions
+
+Puedes crear un workflow que genere y publique automáticamente el APK:
+
+- Crea `.github/workflows/release.yml`
+- Configura los secrets en GitHub: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- El workflow se activará al crear un nuevo tag `v*`
+- Compilará el APK y lo adjuntará automáticamente al release
+
+Ver documentación de GitHub Actions para más detalles.
 
 ## 🔐 Seguridad
 
@@ -232,8 +315,13 @@ MIT
 
 ---
 
-**Versión**: 1.0.0 (Preparada para testing)
-**Última actualización**: 2025-11-24
+**Versión**: 1.0.0 - Lista para Producción  
+**Última actualización**: 25 de noviembre de 2025
 
-Desarrollado por Marc Fernández Messa, utilizando la APP Desktop desarrollada por Brian Bautista para Solucions Socials
+**Recursos adicionales:**
+- 📖 [Manual de Usuario](https://docs.google.com/document/d/1VyEojHDf-NtNp4Ufff_hr-TpM_tW7enjEtEMNN7hdHk/edit?usp=sharing)
+- 📥 [Descargas](../../releases)
+- 🐛 [Reportar un problema](../../issues)
+
+Desarrollado por **Marc Fernández Messa**, basado en la aplicación Desktop desarrollada por **Brian Bautista** para **Solucions Socials Sostenibles**.
 
