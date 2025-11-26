@@ -22,11 +22,11 @@ class ExternalServicesConfig {
   // Configuración de actualizaciones (GitHub)
   static const String githubOwner = String.fromEnvironment(
     'GITHUB_REPO_OWNER',
-    defaultValue: '', // p.ej. SolucionsSocials
+    defaultValue: 'Marcausente',
   );
   static const String githubRepo = String.fromEnvironment(
     'GITHUB_REPO_NAME',
-    defaultValue: '', // p.ej. Solucions-Socials-Sostenibles-Kronos-Mobile
+    defaultValue: 'Solucions-Socials-Sostenibles-Kronos-Mobile',
   );
   static const String githubReleasesUrl = String.fromEnvironment(
     'GITHUB_RELEASES_URL',
