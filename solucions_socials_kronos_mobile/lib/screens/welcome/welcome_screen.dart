@@ -97,8 +97,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   // Mensaje de bienvenida
                   Text(
                     _loading
-                        ? 'Bienvenido'
-                        : 'Bienvenido${_userName != null ? ' $_userName' : ''}',
+                        ? 'Bienvenido/a'
+                        : 'Bienvenido/a${_userName != null ? ' $_userName' : ''}',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
