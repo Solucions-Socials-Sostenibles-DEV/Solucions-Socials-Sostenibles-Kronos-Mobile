@@ -389,8 +389,18 @@ class _CambiarContrasenaCardState extends State<_CambiarContrasenaCard> {
       return;
     }
 
-    if (nuevaContrasena.length < 6) {
-      _showSnack('La contraseña debe tener al menos 6 caracteres');
+    if (nuevaContrasena.length < 8) {
+      _showSnack('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+
+    if (!nuevaContrasena.contains(RegExp(r'[A-Z]'))) {
+      _showSnack('La contraseña debe contener al menos una mayúscula');
+      return;
+    }
+
+    if (!nuevaContrasena.contains(RegExp(r'[0-9]'))) {
+      _showSnack('La contraseña debe contener al menos un número');
       return;
     }
 

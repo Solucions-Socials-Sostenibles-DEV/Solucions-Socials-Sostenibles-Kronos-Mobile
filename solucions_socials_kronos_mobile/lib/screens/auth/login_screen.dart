@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/auth_service.dart';
 import '../../utils/roles.dart';
+import '../../utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,6 +48,14 @@ class _LoginScreenState extends State<LoginScreen> {
           _showSnack('Completa nombre, email y contraseña');
           return;
         }
+        
+        // Validar contraseña antes de enviar a Supabase
+        final String? passwordError = Validators.password(password);
+        if (passwordError != null) {
+          _showSnack(passwordError);
+          return;
+        }
+        
         await _authService.signUp(
           email: email,
           password: password,
@@ -191,6 +200,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 obscure: true,
                                 icon: Icons.lock_outline,
                               ),
+                              if (_isRegister) ...<Widget>[
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(
+                                    'Mínimo 8 caracteres, una mayúscula y un número',
+                                    style: TextStyle(
+                                      color: muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 20),
                               _PrimaryButton(
                                 onPressed: _isSubmitting ? null : _submit,

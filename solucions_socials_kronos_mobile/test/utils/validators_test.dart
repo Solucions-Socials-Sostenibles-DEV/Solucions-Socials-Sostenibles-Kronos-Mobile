@@ -87,5 +87,62 @@ void main() {
         expect(result, equals('Formato de correo incorrecto'));
       });
     });
+
+    group('password', () {
+      test('devuelve error cuando la contraseña es null', () {
+        final String? result = Validators.password(null);
+        expect(result, equals('La contraseña es obligatoria'));
+      });
+
+      test('devuelve error cuando la contraseña está vacía', () {
+        final String? result = Validators.password('');
+        expect(result, equals('La contraseña es obligatoria'));
+      });
+
+      test('devuelve error cuando tiene menos de 8 caracteres', () {
+        final String? result = Validators.password('Pass1');
+        expect(result, equals('Mínimo 8 caracteres'));
+      });
+
+      test('devuelve error cuando no tiene mayúscula', () {
+        final String? result = Validators.password('password123');
+        expect(result, equals('Debe contener al menos una mayúscula'));
+      });
+
+      test('devuelve error cuando no tiene número', () {
+        final String? result = Validators.password('Password');
+        expect(result, equals('Debe contener al menos un número'));
+      });
+
+      test('devuelve null cuando la contraseña es válida', () {
+        final String? result = Validators.password('Password123');
+        expect(result, isNull);
+      });
+
+      test('acepta contraseñas con caracteres especiales', () {
+        final String? result = Validators.password('Pass@word123');
+        expect(result, isNull);
+      });
+
+      test('acepta contraseñas largas válidas', () {
+        final String? result = Validators.password('MiContraseña123Segura');
+        expect(result, isNull);
+      });
+
+      test('valida exactamente 8 caracteres con requisitos', () {
+        final String? result = Validators.password('Pass1234');
+        expect(result, isNull);
+      });
+
+      test('falla con 8 caracteres pero sin mayúscula', () {
+        final String? result = Validators.password('password1');
+        expect(result, equals('Debe contener al menos una mayúscula'));
+      });
+
+      test('falla con 8 caracteres pero sin número', () {
+        final String? result = Validators.password('Password');
+        expect(result, equals('Debe contener al menos un número'));
+      });
+    });
   });
 }
