@@ -281,17 +281,23 @@ class _RutaScreenState extends State<RutaScreen>
             ),
           ),
         ),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Center(
-            child: Image.asset(
-              'assets/images/Logo Minimalist SSS High Opacity.PNG',
-              height: 40,
-              width: 40,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
+        leading: widget.hojaRutaId != null
+            ? IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: 'Cerrar edición',
+              )
+            : Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/Logo Minimalist SSS High Opacity.PNG',
+                    height: 40,
+                    width: 40,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
         leadingWidth: 56,
         titleSpacing: 8,
         title: Column(
