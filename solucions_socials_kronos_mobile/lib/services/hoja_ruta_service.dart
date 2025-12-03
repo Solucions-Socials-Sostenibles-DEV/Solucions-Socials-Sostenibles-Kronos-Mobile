@@ -208,7 +208,8 @@ class HojaRutaService {
           )
           .eq('hoja_ruta_id', hojaRutaId)
           .order('tipo')
-          .order('fase');
+          .order('fase')
+          .order('id');
       return data.cast<Map<String, dynamic>>();
     } catch (e) {
       throw Exception('Error al obtener el checklist: $e');
