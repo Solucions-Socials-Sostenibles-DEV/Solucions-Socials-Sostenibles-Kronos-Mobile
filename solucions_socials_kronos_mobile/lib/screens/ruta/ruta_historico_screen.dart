@@ -88,7 +88,7 @@ class _RutaHistoricoScreenState extends State<RutaHistoricoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Otras hojas de ruta',
+              'Cambiar Hoja',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -96,7 +96,7 @@ class _RutaHistoricoScreenState extends State<RutaHistoricoScreen> {
             ),
             SizedBox(height: 4),
             Text(
-              'Selecciona para cargar',
+              'Selecciona una hoja para cargar',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 12,

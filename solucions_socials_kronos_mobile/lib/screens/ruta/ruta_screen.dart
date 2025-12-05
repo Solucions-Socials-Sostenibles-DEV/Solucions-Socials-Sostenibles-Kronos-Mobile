@@ -980,8 +980,8 @@ class _ActionList extends StatelessWidget {
         disabled: confirmDisabled,
       ),
       _ActionItem(
-        label: 'Histórico',
-        icon: Icons.history,
+        label: 'Cambiar Hoja',
+        icon: Icons.swap_horiz_outlined,
         onTap: onTapHistorico,
       ),
     ];
