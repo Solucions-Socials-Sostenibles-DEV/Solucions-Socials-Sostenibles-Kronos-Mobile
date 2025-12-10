@@ -39,7 +39,7 @@ class AdminService {
       // a menos que tengamos una Edge Function o permisos especiales.
       // Por ahora confiamos en que user_profiles es la fuente de verdad para la UI.
       
-      Logger.i('Usuario actualizado correctamente: $userId');
+      Logger.d('Usuario actualizado correctamente: $userId');
     } catch (e) {
       Logger.e('Error al actualizar usuario: $e');
       rethrow;
@@ -51,7 +51,7 @@ class AdminService {
   Future<void> deleteUser(String userId) async {
     try {
       await _client.from('user_profiles').delete().eq('id', userId);
-      Logger.i('Usuario eliminado de user_profiles: $userId');
+      Logger.d('Usuario eliminado de user_profiles: $userId');
     } catch (e) {
       Logger.e('Error al eliminar usuario: $e');
       rethrow;
@@ -66,9 +66,9 @@ class AdminService {
       // Intento directo (suele fallar para otros usuarios)
       await _client.auth.admin.updateUserById(
         userId,
-        attributes: UserAttributes(password: newPassword),
+        attributes: AdminUserAttributes(password: newPassword),
       );
-      Logger.i('Contraseña actualizada para: $userId');
+      Logger.d('Contraseña actualizada para: $userId');
     } catch (e) {
       Logger.e('Error al actualizar contraseña (posible falta de permisos): $e');
       // Fallback: Si tuviéramos una Edge Function, la llamaríamos aquí using .functions.invoke()
