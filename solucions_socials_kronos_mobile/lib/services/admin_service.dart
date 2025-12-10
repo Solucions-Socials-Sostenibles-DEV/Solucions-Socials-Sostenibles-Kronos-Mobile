@@ -63,15 +63,17 @@ class AdminService {
   /// Se deja implementado por si se configura un RPC o policy que lo permita
   Future<void> updateUserPassword(String userId, String newPassword) async {
     try {
-      // Intento directo (suele fallar para otros usuarios)
-      await _client.auth.admin.updateUserById(
-        userId,
-        attributes: AdminUserAttributes(password: newPassword),
-      );
+      // Usar RPC helper para actualizar contraseña (requiere ejecutar script SQL en Supabase)
+      await _client.rpc('admin_update_password', params: {
+        'target_user_id': userId,
+        'new_password': newPassword,
+      });
       Logger.d('Contraseña actualizada para: $userId');
     } catch (e) {
-      Logger.e('Error al actualizar contraseña (posible falta de permisos): $e');
-      // Fallback: Si tuviéramos una Edge Function, la llamaríamos aquí using .functions.invoke()
+      Logger.e('Error al actualizar contraseña: $e');
+      if (e.toString().contains('function not found') || e.toString().contains('404')) {
+        throw Exception('Falta configurar la función SQL "admin_update_password" en Supabase.');
+      }
       rethrow;
     }
   }
