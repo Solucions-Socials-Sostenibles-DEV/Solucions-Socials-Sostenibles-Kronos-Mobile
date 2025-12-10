@@ -7,6 +7,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/theme_controller.dart';
 import '../../config/external_services_config.dart';
+import '../../utils/roles.dart';
+import 'admin/admin_users_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -75,6 +77,9 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
+          // Sección de Administración (Solo visible para admins)
+          const _AdminAccessCard(),
+          const SizedBox(height: 16),
           // Sección tipo tarjeta como en Hoja de Ruta
           Container(
             width: double.infinity,
@@ -190,6 +195,118 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           // Verificar actualización
           const _UpdateCard(),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminAccessCard extends StatefulWidget {
+  const _AdminAccessCard();
+
+  @override
+  State<_AdminAccessCard> createState() => _AdminAccessCardState();
+}
+
+class _AdminAccessCardState extends State<_AdminAccessCard> {
+  bool _isAdmin = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminRole();
+  }
+
+  Future<void> _checkAdminRole() async {
+    try {
+      final SupabaseClient client = Supabase.instance.client;
+      final String? userId = client.auth.currentUser?.id;
+      if (userId == null) {
+        setState(() => _loading = false);
+        return;
+      }
+
+      final dynamic response = await client
+          .from('user_profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+      if (mounted) {
+        final String role = response['role'] as String? ?? '';
+        setState(() {
+          _isAdmin = RoleUtils.toCanonical(role) == 'admin';
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading || !_isAdmin) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? const Color(0xFF1F2227) 
+            : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.white10 
+              : Colors.black.withOpacity(0.10),
+        ),
+        boxShadow: <BoxShadow>[
+           BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.orangeAccent,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Administración',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.admin_panel_settings, color: Colors.orangeAccent),
+              title: const Text('Gestión de Usuarios'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AdminUsersScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
