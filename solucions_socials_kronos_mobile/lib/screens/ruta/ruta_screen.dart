@@ -509,6 +509,7 @@ class _RutaScreenState extends State<RutaScreen>
                 _ChecklistNotesCard(
                   notes: _checklistNotes,
                   loading: _loadingChecklistNotes,
+                  userRole: _userRole,
                   currentUserId: _authService.currentUser?.id,
                   onAdd: _addChecklistNote,
                   onEdit: _editChecklistNote,
@@ -2828,6 +2829,7 @@ class _ChecklistNotesCard extends StatelessWidget {
   const _ChecklistNotesCard({
     required this.notes,
     required this.loading,
+    required this.userRole,
     required this.currentUserId,
     required this.onAdd,
     required this.onEdit,
@@ -2837,6 +2839,7 @@ class _ChecklistNotesCard extends StatelessWidget {
 
   final List<Map<String, dynamic>> notes;
   final bool loading;
+  final String? userRole;
   final String? currentUserId;
   final Function(String) onAdd;
   final Function(String, String) onEdit;
@@ -2914,6 +2917,7 @@ class _ChecklistNotesCard extends StatelessWidget {
                 for (final note in notes)
                   _ChecklistNoteItem(
                     note: note,
+                    userRole: userRole,
                     currentUserId: currentUserId,
                     onEdit: onEdit,
                     onDelete: onDelete,
@@ -2970,6 +2974,7 @@ class _ChecklistNotesCard extends StatelessWidget {
 class _ChecklistNoteItem extends StatelessWidget {
   const _ChecklistNoteItem({
     required this.note,
+    required this.userRole,
     required this.currentUserId,
     required this.onEdit,
     required this.onDelete,
@@ -2979,6 +2984,7 @@ class _ChecklistNoteItem extends StatelessWidget {
   });
 
   final Map<String, dynamic> note;
+  final String? userRole;
   final String? currentUserId;
   final Function(String, String) onEdit;
   final Function(String) onDelete;
@@ -3001,6 +3007,12 @@ class _ChecklistNoteItem extends StatelessWidget {
     } catch (_) {}
 
     final bool isOwner = userId == currentUserId && currentUserId != null;
+
+    final bool canModify =
+        userRole == 'admin' ||
+        userRole == 'jefe' ||
+        userRole == 'management' ||
+        userRole == 'manager';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -3048,7 +3060,7 @@ class _ChecklistNoteItem extends StatelessWidget {
               height: 1.3,
             ),
           ),
-          if (isOwner) ...<Widget>[
+          if (canModify) ...<Widget>[
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

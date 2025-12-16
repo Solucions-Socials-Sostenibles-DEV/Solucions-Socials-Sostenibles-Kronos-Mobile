@@ -377,8 +377,7 @@ class HojaRutaService {
       await _client
           .from('checklist_notes')
           .delete()
-          .eq('id', noteId)
-          .eq('user_id', uid); // Seguridad por RLS + filtro extra
+          .eq('id', noteId);
     } catch (e) {
       throw Exception('Error al eliminar nota de checklist: $e');
     }
@@ -396,8 +395,7 @@ class HojaRutaService {
       await _client
           .from('checklist_notes')
           .update(<String, dynamic>{'content': content})
-          .eq('id', noteId)
-          .eq('user_id', uid);
+          .eq('id', noteId);
     } catch (e) {
       throw Exception('Error al actualizar nota de checklist: $e');
     }
