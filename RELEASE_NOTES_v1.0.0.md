@@ -7,12 +7,14 @@ Esta es la primera versión estable de SSS Kronos Mobile, lista para ser utiliza
 ## ✨ Funcionalidades Principales
 
 ### 🔐 Autenticación y Seguridad
+
 - ✅ Sistema de login completo con Supabase
 - ✅ Sistema de permisos por roles (Admin, Gestión, Jefe)
 - ✅ Onboarding interactivo para nuevos usuarios
 - ✅ Sesión persistente
 
 ### 📋 Gestión de Hojas de Ruta
+
 - ✅ Visualización de hojas de ruta en tiempo real
 - ✅ Gestión completa de checklist de servicio
   - Categorías: Comedor, Cocina, Almacén, Catering, Otros
@@ -27,11 +29,13 @@ Esta es la primera versión estable de SSS Kronos Mobile, lista para ser utiliza
 - ✅ Histórico completo de hojas de ruta
 
 ### 🔄 Sincronización
+
 - ✅ Sincronización en tiempo real con la aplicación Desktop
 - ✅ Actualización automática de datos
 - ✅ Notificaciones de cambios
 
 ### 🎨 Interfaz de Usuario
+
 - ✅ Diseño moderno y limpio
 - ✅ Modo claro y oscuro
 - ✅ Responsive para diferentes tamaños de pantalla
@@ -39,6 +43,7 @@ Esta es la primera versión estable de SSS Kronos Mobile, lista para ser utiliza
 - ✅ AppBar con degradado personalizado
 
 ### ⚙️ Configuración y Ajustes
+
 - ✅ Pantalla de ajustes completa
 - ✅ Verificación de estado de conexiones (Supabase, Holded)
 - ✅ **Detector de actualizaciones desde GitHub**
@@ -59,20 +64,25 @@ Esta es la primera versión estable de SSS Kronos Mobile, lista para ser utiliza
 ## 📥 Instalación
 
 ### Paso 1: Descargar la APK
+
 Descarga el archivo `SSS-Kronos-Mobile-v1.0.0.apk` desde los assets de esta release.
 
 ### Paso 2: Permitir instalación de fuentes desconocidas
+
 En tu dispositivo Android:
+
 1. Ve a **Ajustes → Seguridad/Privacidad → Instalar apps desconocidas**
 2. Selecciona el navegador o gestor de archivos que uses
 3. Activa **"Permitir"**
 
 ### Paso 3: Instalar
+
 1. Abre el archivo APK descargado
 2. Si aparece una advertencia de Play Protect, pulsa **"Más detalles" → "Instalar de todos modos"**
 3. Toca **"Instalar"**
 
 ### Paso 4: Iniciar sesión
+
 1. Abre **"SSS Kronos Mobile"**
 2. Inicia sesión con tus credenciales proporcionadas por el administrador
 3. Si es tu primera vez, completa el tutorial inicial
@@ -80,6 +90,7 @@ En tu dispositivo Android:
 ## 🔄 Actualización desde versiones anteriores
 
 Esta es la primera versión estable. Las futuras actualizaciones se notificarán automáticamente desde la app:
+
 - Ve a **⚙️ Ajustes → Verificar actualización**
 - La app te informará si hay nuevas versiones disponibles
 
@@ -115,4 +126,3 @@ Ninguno reportado en esta versión.
 ## 🎊 ¡Gracias por usar SSS Kronos Mobile!
 
 Si encuentras algún problema o tienes sugerencias, por favor abre un issue en el repositorio de GitHub.
-
