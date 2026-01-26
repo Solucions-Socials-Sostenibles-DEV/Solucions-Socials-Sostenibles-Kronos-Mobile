@@ -65,63 +65,131 @@ class _AuthGateState extends State<AuthGate> {
   Session? _session;
   Map<String, dynamic>? _profile;
   bool _showWelcome = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _initializeAuth();
+  }
+
+  Future<void> _initializeAuth() async {
     final SupabaseClient client = Supabase.instance.client;
-    _session = client.auth.currentSession;
-    _loadProfile();
+    
+    // 1. Obtener sesión actual
+    final Session? currentSession = client.auth.currentSession;
+    _session = currentSession;
+
+    // 2. Escuchar cambios de estado
     client.auth.onAuthStateChange.listen((AuthState state) async {
       final bool wasLoggedOut = _session == null && state.session != null;
-      setState(() {
-        _session = state.session;
-        // Si el usuario acaba de terminar de logguearse
-        if (wasLoggedOut && state.session != null) {
-          _showWelcome = true;
-        }
-      });
-      await _loadProfile();
+      
+      if (mounted) {
+        setState(() {
+          _session = state.session;
+          if (wasLoggedOut && state.session != null) {
+            _showWelcome = true;
+          }
+        });
+      }
+
+      // Si tenemos sesión y se ha refrescado o iniciado, cargamos perfil
+      if (state.session != null) {
+        await _loadProfile();
+      }
     });
+
+    // 3. Gestionar estado inicial
+    if (currentSession != null) {
+      if (currentSession.isExpired) {
+        // Si está expirada, esperamos a que el listener reciba el refresco
+        // No llamamos a _loadProfile todavía
+      } else {
+        // Si es válida, cargamos perfil inmediatamente
+        await _loadProfile();
+      }
+    } else {
+      // No hay sesión, terminamos carga
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _loadProfile() async {
-    final SupabaseClient client = Supabase.instance.client;
-    final String? userId = client.auth.currentUser?.id;
-    if (userId == null) {
-      setState(() => _profile = null);
+    if (!mounted) return;
+    
+    // Si ya estamos cargando o no hay sesión, salir
+    if (_session == null) {
+      setState(() {
+        _profile = null;
+        _isLoading = false;
+      });
       return;
     }
+
+    final SupabaseClient client = Supabase.instance.client;
+    final String? userId = client.auth.currentUser?.id;
+    
+    if (userId == null) {
+      setState(() {
+        _profile = null;
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       final List<Map<String, dynamic>> rows = await client
           .from('user_profiles')
           .select('name, role, onboarding_completed')
           .eq('id', userId)
           .limit(1);
-      setState(
-        () => _profile = rows.isNotEmpty
-            ? rows.first
-            : <String, dynamic>{'onboarding_completed': true},
-      );
-    } catch (_) {
-      setState(
-        () => _profile = <String, dynamic>{'onboarding_completed': true},
-      );
+          
+      if (mounted) {
+        setState(() {
+          _profile = rows.isNotEmpty
+              ? rows.first
+              : <String, dynamic>{'onboarding_completed': true};
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      // Si el error es de autenticación (401), forzamos logout
+      // en versiones recientes PostgrestException tiene 'code'
+      if (e.toString().contains('401') || e.toString().contains('JWT')) {
+        await client.auth.signOut();
+      } else {
+        // En otros errores, asumimos onboarding completado para no bloquear,
+        // pero idealmente deberíamos mostrar un error.
+        if (mounted) {
+          setState(() {
+            _profile = <String, dynamic>{'onboarding_completed': true};
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Si estamos esperando validación inicial o refresh
+    if (_isLoading) {
+       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     if (_session == null) {
-      setState(() => _showWelcome = false);
       return const LoginScreen();
     }
+    
+    // Si session existe pero no profile cargado aún (y no estamos loading),
+    // mostramos loading también.
     if (_profile == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    
     final bool onboardingDone = _profile?['onboarding_completed'] == true;
     if (!onboardingDone) {
-      setState(() => _showWelcome = false);
+      // _showWelcome gestionado en el estado
       return const OnboardingScreen();
     }
     // Mostrar pantalla de bienvenida si es un login reciente

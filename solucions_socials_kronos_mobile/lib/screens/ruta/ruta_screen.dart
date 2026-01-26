@@ -76,6 +76,21 @@ class _RutaScreenState extends State<RutaScreen>
     super.didChangeAppLifecycleState(state);
     // Refrescar cuando la app vuelve al foreground
     if (state == AppLifecycleState.resumed) {
+      _checkSessionAndReload();
+    }
+  }
+
+  Future<void> _checkSessionAndReload() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null || session.isExpired) {
+      // Si la sesión es nula o expirada, el SDK intentará refrescar.
+      // Esperamos un momento o delegamos en el listener de AuthGate.
+      // Pero si estamos aquí, intengamos recargar tras un pequeño delay 
+      // para dar tiempo al refresh automático.
+      await Future.delayed(const Duration(milliseconds: 1000));
+    }
+    // Intentar recargar de todas formas, el servicio manejará errores si falla
+    if (mounted) {
       _loadHojaRutaActual();
       _loadEstadisticas();
     }
