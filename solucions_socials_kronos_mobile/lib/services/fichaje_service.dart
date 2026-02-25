@@ -126,7 +126,7 @@ class FichajeService {
         final Map<String, dynamic> fichaje = row as Map<String, dynamic>;
         final String idOlvidado = fichaje['id'].toString();
 
-        Logger.i('Cerrando fichaje olvidado: $idOlvidado del día ${fichaje['fecha']}');
+        Logger.d('Cerrando fichaje olvidado: $idOlvidado del día ${fichaje['fecha']}');
         
         // Finalizar pausa si hubiese alguna colgada usando RPC (o si se requiere forzar fin de pausa)
         final Map<String, dynamic>? pausa = await getActivePausa(idOlvidado);
