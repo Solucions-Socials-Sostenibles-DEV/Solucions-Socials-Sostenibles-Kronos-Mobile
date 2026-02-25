@@ -27,29 +27,58 @@ class _FichajeScreenState extends State<FichajeScreen> {
   Timer? _timer;
   Duration _workedDuration = Duration.zero;
 
+  bool _isCodeValidated = false;
+  final TextEditingController _codigoController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _fichajeService = FichajeService(_client);
-    _initFichaje();
+    _isLoading = false;
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _codigoController.dispose();
     super.dispose();
   }
 
-  Future<void> _initFichaje() async {
+  Future<void> _validarCodigo() async {
+    final codigo = _codigoController.text.trim();
+    if (codigo.isEmpty) {
+      _showSnack('Introduce un código');
+      return;
+    }
+    FocusScope.of(context).unfocus(); // Ocultar teclado
+    setState(() => _isLoading = true);
+    try {
+      final data = await _fichajeService.validarCodigo(codigo);
+      setState(() {
+        _empleadoId = data['empleado_id']?.toString();
+        _isCodeValidated = true;
+      });
+      await _initFichajeDashboard();
+    } catch (e) {
+      Logger.e('Error al validar código: $e');
+      // Si falla por columna inexistente o cualquier cosa, mostrar error
+      _showSnack('No se pudo validar el código. Comprueba que sea correcto.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _initFichajeDashboard() async {
     setState(() => _isLoading = true);
     try {
       final User? currentUser = _client.auth.currentUser;
-      if (currentUser == null) return;
-      _userId = currentUser.id;
+      if (currentUser != null) {
+        _userId = currentUser.id;
+      }
 
-      // Suponemos que empleado_id es el id de usuario para simplicidad, o lo extraemos
-      // Si el proyecto usa getProfile() lo ideal sería mapearlo, aquí asignamos userId.
-      _empleadoId = _userId;
+      if (_empleadoId == null) {
+         throw Exception('Empleado ID no encontrado');
+      }
 
       // 1. Cerrar fichajes olvidados del día anterior
       await _fichajeService.verificarYCerrarFichajesOlvidados(_empleadoId!);
@@ -199,13 +228,100 @@ class _FichajeScreenState extends State<FichajeScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Tiempo transcurrido
+          : !_isCodeValidated
+              ? _buildCodeInputView()
+              : _buildDashboardView(),
+    );
+  }
+
+  Widget _buildCodeInputView() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(Icons.access_time_filled, size: 64, color: Colors.green),
+          const SizedBox(height: 24),
+          const Text(
+            'Introduce tu código de fichaje',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Introduce el código único asignado para fichar. El jefe puede fichar por cualquier empleado.',
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1F2227) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.white10 : Colors.green.withOpacity(0.15),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _codigoController,
+                  decoration: InputDecoration(
+                    labelText: 'Código',
+                    hintText: 'EJ: 1234',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.green, width: 2),
+                    ),
+                    prefixIcon: const Icon(Icons.password),
+                  ),
+                  keyboardType: TextInputType.visiblePassword,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _validarCodigo(),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _validarCodigo,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Validar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardView() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Tiempo transcurrido
                   if (_estado != 'SIN_FICHAJE')
                     Column(
                       children: [
@@ -276,8 +392,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
                     ),
                 ],
               ),
-            ),
-    );
+            );
   }
 
   Widget _buildBigButton({

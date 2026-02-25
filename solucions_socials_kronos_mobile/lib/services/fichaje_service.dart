@@ -47,6 +47,27 @@ class FichajeService {
     }
   }
 
+  /// Valida un código de fichaje y devuelve la información del empleado asociado
+  Future<Map<String, dynamic>> validarCodigo(String codigo) async {
+    try {
+      final List<dynamic> response = await _client
+          .from('fichajes_codigos')
+          .select()
+          .eq('codigo', codigo)
+          .eq('estado', true) // Asumiendo que hay un campo de estado activo, si falla podemos quitarlo
+          .limit(1);
+
+      if (response.isEmpty) {
+        throw Exception('Código de fichaje inválido o inactivo.');
+      }
+
+      return response.first as Map<String, dynamic>;
+    } catch (e) {
+      Logger.e('Error en validarCodigo: $e');
+      rethrow;
+    }
+  }
+
   /// Obtiene el estado actual del dashboard para determinar qué botones mostrar
   Future<Map<String, dynamic>> getDashboardStatus(String empleadoId) async {
     try {
