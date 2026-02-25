@@ -47,9 +47,111 @@ class FichajeService {
     }
   }
 
+  /// Obtiene el estado actual del dashboard para determinar qué botones mostrar
+  Future<Map<String, dynamic>> getDashboardStatus(String empleadoId) async {
+    try {
+      final String hoy = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      // 1. Buscar si hay fichaje hoy
+      final List<dynamic> fichajesHoy = await _client
+          .from('fichajes')
+          .select()
+          .eq('empleado_id', empleadoId)
+          .eq('fecha', hoy)
+          .limit(1);
+
+      if (fichajesHoy.isEmpty) {
+        return <String, dynamic>{
+          'estado': 'SIN_FICHAJE', // Mostrar botón [FICHAR ENTRADA]
+          'fichaje': null,
+          'pausaActiva': null,
+        };
+      }
+
+      final Map<String, dynamic> fichaje = fichajesHoy.first as Map<String, dynamic>;
+      final String fichajeId = fichaje['id'].toString();
+
+      // 2. Si ya tiene salida
+      if (fichaje['hora_salida'] != null || fichaje['salida'] != null) {
+        return <String, dynamic>{
+          'estado': 'FICHAJE_CERRADO', // Mostrar resumen del día
+          'fichaje': fichaje,
+          'pausaActiva': null,
+        };
+      }
+
+      // 3. Está abierto, buscar pausa activa
+      final Map<String, dynamic>? pausaActiva = await getActivePausa(fichajeId);
+
+      if (pausaActiva != null) {
+        return <String, dynamic>{
+          'estado': 'PAUSA_ACTIVA', // Mostrar botón [FINALIZAR PAUSA], bloquear salida
+          'fichaje': fichaje,
+          'pausaActiva': pausaActiva,
+        };
+      }
+
+      // 4. Está abierto y sin pausa
+      return <String, dynamic>{
+        'estado': 'FICHAJE_ABIERTO', // Mostrar [INICIAR PAUSA] y [FICHAR SALIDA]
+        'fichaje': fichaje,
+        'pausaActiva': null,
+      };
+      
+    } catch (e) {
+      Logger.e('Error en getDashboardStatus: $e');
+      rethrow;
+    }
+  }
+
   // ---------------------------------------------------------------------------
-  // 2. OPERACIONES SOBRE FICHAJES (Entrada / Salida)
+  // 2. OPERACIONES SOBRE FICHAJES (Entrada / Salida / Auto-cierre)
   // ---------------------------------------------------------------------------
+
+  /// Verifica y cierra automáticamente los fichajes de días anteriores sin salida
+  Future<void> verificarYCerrarFichajesOlvidados(String empleadoId) async {
+    try {
+      final String hoy = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      // Buscar fichajes del empleado, anteriores a hoy, que no tengan salida
+      final List<dynamic> olvidados = await _client
+          .from('fichajes')
+          .select()
+          .eq('empleado_id', empleadoId)
+          .lt('fecha', hoy)
+          .isFilter('salida', null)
+          .isFilter('hora_salida', null); // Asegurarse de ambas
+
+      for (final dynamic row in olvidados) {
+        final Map<String, dynamic> fichaje = row as Map<String, dynamic>;
+        final String idOlvidado = fichaje['id'].toString();
+
+        Logger.i('Cerrando fichaje olvidado: $idOlvidado del día ${fichaje['fecha']}');
+        
+        // Finalizar pausa si hubiese alguna colgada usando RPC (o si se requiere forzar fin de pausa)
+        final Map<String, dynamic>? pausa = await getActivePausa(idOlvidado);
+        if (pausa != null) {
+           await _client.rpc('finalizar_pausa_fichaje', params: <String, dynamic>{
+             'p_pausa_id': pausa['id'] ?? pausa['pausa_id'],
+           });
+        }
+
+        // Llamar RPC para registrar salida
+        await _client.rpc('registrar_salida_fichaje', params: <String, dynamic>{
+          'p_fichaje_id': idOlvidado,
+        });
+
+        // Marcar como modificado/olvidado (si el RPC no lo hace por defecto)
+        await _client
+            .from('fichajes')
+            .update(<String, dynamic>{'es_modificado': true})
+            .eq('id', idOlvidado);
+      }
+    } catch (e) {
+      Logger.e('Error en verificarYCerrarFichajesOlvidados: $e');
+      // No re-lanzamos para que no bloquee el login, solo se loguea.
+    }
+  }
 
   /// Registra un nuevo fichaje de entrada
   Future<Map<String, dynamic>> registrarEntrada({
