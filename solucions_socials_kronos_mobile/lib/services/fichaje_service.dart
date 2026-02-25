@@ -98,27 +98,46 @@ class FichajeService {
   }
 
   /// Finaliza el fichaje activo añadiendo una fecha de salida
-  Future<Map<String, dynamic>> registrarSalida({
+  Future<void> registrarSalida({
     required String fichajeId,
-    String? ubicacion,
-    double? horasTotales,
   }) async {
     try {
-      // TODO: Si existe un RPC para calcular las horas totales y hacer la validación:
-      // return await _client.rpc('finalizar_fichaje', params: { ... });
-
-      final Map<String, dynamic> response = await _client
+      // 1. Obtener el fichaje actual para verificar fecha y salida
+      // Asumimos que la columna primaria se llama 'id' o 'fichaje_id'. 
+      // Si falla .eq('id', ...), ajustar al nombre correcto.
+      final List<dynamic> fichajes = await _client
           .from('fichajes')
-          .update(<String, dynamic>{
-            'salida': DateTime.now().toUtc().toIso8601String(),
-            if (ubicacion != null) 'ubicacion_salida': ubicacion,
-            if (horasTotales != null) 'horas_totales': horasTotales,
-          })
-          .eq('fichaje_id', fichajeId) // o 'id', dependiendo de tu PK
           .select()
-          .single();
+          .eq('id', fichajeId)
+          .limit(1);
 
-      return response;
+      if (fichajes.isEmpty) {
+        throw Exception('El fichaje de hoy no existe o el ID es inválido.');
+      }
+
+      final Map<String, dynamic> fichaje = fichajes.first as Map<String, dynamic>;
+      final String hoy = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      
+      if (fichaje['fecha'] != hoy) {
+         throw Exception('El fichaje no corresponde al día de hoy.');
+      }
+      
+      // Comprobar tanto 'hora_salida' como 'salida' para asegurar
+      if (fichaje['hora_salida'] != null || fichaje['salida'] != null) {
+         throw Exception('El fichaje de hoy ya tiene registrada la salida.');
+      }
+
+      // 2. Que no haya pausas activas
+      final Map<String, dynamic>? pausaActiva = await getActivePausa(fichajeId);
+      if (pausaActiva != null) {
+        throw Exception('Debes finalizar tu pausa actual antes de registrar la salida.');
+      }
+
+      // 3. Llamar a la función RPC de Supabase
+      await _client.rpc('registrar_salida_fichaje', params: <String, dynamic>{
+        'p_fichaje_id': fichajeId,
+      });
+
     } catch (e) {
       Logger.e('Error en registrarSalida: $e');
       rethrow;
