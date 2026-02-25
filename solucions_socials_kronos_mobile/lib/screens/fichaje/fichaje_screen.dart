@@ -22,6 +22,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
 
   String? _empleadoId;
   String? _userId;
+  String? _empleadoNombre;
 
   // Variables para simular el cronómetro en UI
   Timer? _timer;
@@ -56,6 +57,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
       final data = await _fichajeService.validarCodigo(codigo);
       setState(() {
         _empleadoId = data['empleado_id']?.toString();
+        _empleadoNombre = data['descripcion']?.toString() ?? 'Empleado';
         _isCodeValidated = true;
       });
       await _initFichajeDashboard();
@@ -321,6 +323,48 @@ class _FichajeScreenState extends State<FichajeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Banner de empleado
+          if (_empleadoNombre != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.person, color: Colors.green),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Fichando como:\n$_empleadoNombre',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.grey),
+                    tooltip: 'Cambiar código',
+                    onPressed: () {
+                      setState(() {
+                        _isCodeValidated = false;
+                        _codigoController.clear();
+                        _empleadoId = null;
+                        _empleadoNombre = null;
+                        _estado = 'SIN_FICHAJE';
+                        _timer?.cancel();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+
           // Tiempo transcurrido
                   if (_estado != 'SIN_FICHAJE')
                     Column(

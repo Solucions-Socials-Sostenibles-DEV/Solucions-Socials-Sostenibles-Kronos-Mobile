@@ -54,7 +54,7 @@ class FichajeService {
           .from('fichajes_codigos')
           .select()
           .eq('codigo', codigo)
-          .eq('estado', true) // Asumiendo que hay un campo de estado activo, si falla podemos quitarlo
+          .eq('activo', true)
           .limit(1);
 
       if (response.isEmpty) {
