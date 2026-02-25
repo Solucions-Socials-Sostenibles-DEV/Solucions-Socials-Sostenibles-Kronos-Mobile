@@ -47,6 +47,21 @@ class FichajeService {
     }
   }
 
+  /// Obtiene todas las pausas de un fichaje específico
+  Future<List<Map<String, dynamic>>> getPausas(String fichajeId) async {
+    try {
+      final List<dynamic> response = await _client
+          .from('fichajes_pausas')
+          .select()
+          .eq('fichaje_id', fichajeId)
+          .order('inicio', ascending: true);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      Logger.e('Error getting pausas: $e');
+      rethrow;
+    }
+  }
+
   /// Valida un código de fichaje y devuelve la información del empleado asociado
   Future<Map<String, dynamic>> validarCodigo(String codigo) async {
     try {
@@ -114,38 +129,51 @@ class FichajeService {
           'estado': 'SIN_FICHAJE', // Mostrar botón [FICHAR ENTRADA]
           'fichaje': null,
           'pausaActiva': null,
+          'pausas': <Map<String, dynamic>>[],
         };
       }
 
       final Map<String, dynamic> fichaje = fichajesHoy.first as Map<String, dynamic>;
-      final String fichajeId = fichaje['id'].toString();
+    final String fichajeId = fichaje['id'].toString();
 
-      // 2. Si ya tiene salida
-      if (fichaje['hora_salida'] != null || fichaje['salida'] != null) {
-        return <String, dynamic>{
-          'estado': 'FICHAJE_CERRADO', // Mostrar resumen del día
-          'fichaje': fichaje,
-          'pausaActiva': null,
-        };
-      }
+    // Obtener todas las pausas de este fichaje para el UI
+    final List<Map<String, dynamic>> pausas = await getPausas(fichajeId);
 
-      // 3. Está abierto, buscar pausa activa
-      final Map<String, dynamic>? pausaActiva = await getActivePausa(fichajeId);
-
-      if (pausaActiva != null) {
-        return <String, dynamic>{
-          'estado': 'PAUSA_ACTIVA', // Mostrar botón [FINALIZAR PAUSA], bloquear salida
-          'fichaje': fichaje,
-          'pausaActiva': pausaActiva,
-        };
-      }
-
-      // 4. Está abierto y sin pausa
+    // 2. Si ya tiene salida
+    if (fichaje['hora_salida'] != null || fichaje['salida'] != null) {
       return <String, dynamic>{
-        'estado': 'FICHAJE_ABIERTO', // Mostrar [INICIAR PAUSA] y [FICHAR SALIDA]
+        'estado': 'FICHAJE_CERRADO', // Mostrar resumen del día
         'fichaje': fichaje,
         'pausaActiva': null,
+        'pausas': pausas,
       };
+    }
+
+    // 3. Está abierto, buscar pausa activa en la lista o en BD
+    // Podemos obtenerla directamente de la lista que acabamos de traer
+    Map<String, dynamic>? pausaActiva;
+    try {
+      pausaActiva = pausas.firstWhere((p) => p['fin'] == null);
+    } catch (_) {
+      pausaActiva = null;
+    }
+
+    if (pausaActiva != null) {
+      return <String, dynamic>{
+        'estado': 'PAUSA_ACTIVA', // Mostrar botón [FINALIZAR PAUSA], bloquear salida
+        'fichaje': fichaje,
+        'pausaActiva': pausaActiva,
+        'pausas': pausas,
+      };
+    }
+
+    // 4. Está abierto y sin pausa
+    return <String, dynamic>{
+      'estado': 'FICHAJE_ABIERTO', // Mostrar [INICIAR PAUSA] y [FICHAR SALIDA]
+      'fichaje': fichaje,
+      'pausaActiva': null,
+      'pausas': pausas,
+    };  
       
     } catch (e) {
       Logger.e('Error en getDashboardStatus: $e');

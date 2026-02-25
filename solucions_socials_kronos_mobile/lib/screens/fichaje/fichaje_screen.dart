@@ -20,6 +20,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
   String _estado = 'SIN_FICHAJE';
   Map<String, dynamic>? _fichajeActual;
   Map<String, dynamic>? _pausaActiva;
+  List<Map<String, dynamic>> _pausasHoy = [];
 
   String? _empleadoId;
   String? _userId;
@@ -105,6 +106,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
           _estado = status['estado'] as String;
           _fichajeActual = status['fichaje'] as Map<String, dynamic>?;
           _pausaActiva = status['pausaActiva'] as Map<String, dynamic>?;
+          _pausasHoy = (status['pausas'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
         });
         
         _updateTimer();
@@ -137,9 +139,26 @@ class _FichajeScreenState extends State<FichajeScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          // TODO: Para hacerlo exacto, habría que calcular la resta de pausas terminadas y pausa activa
-          // Por simplicidad en la UI básica mostramos tiempo desde entrada
-          _workedDuration = DateTime.now().difference(entrada);
+          Duration totalPausas = Duration.zero;
+          final now = DateTime.now();
+
+          for (var p in _pausasHoy) {
+            final inicioStr = p['inicio'] as String?;
+            final finStr = p['fin'] as String?;
+
+            if (inicioStr != null) {
+              final inicio = DateTime.parse(inicioStr).toLocal();
+              final fin = finStr != null ? DateTime.parse(finStr).toLocal() : now;
+              totalPausas += fin.difference(inicio);
+            }
+          }
+
+          final elapsedTotal = now.difference(entrada);
+          _workedDuration = elapsedTotal - totalPausas;
+
+          if (_workedDuration.isNegative) {
+             _workedDuration = Duration.zero;
+          }
         });
       }
     });
