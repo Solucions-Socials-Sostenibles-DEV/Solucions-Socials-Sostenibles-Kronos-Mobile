@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/fichaje_service.dart';
 import '../../utils/logger.dart';
+import 'fichaje_codigos_screen.dart';
 
 class FichajeScreen extends StatefulWidget {
   const FichajeScreen({super.key});
@@ -227,6 +228,20 @@ class _FichajeScreenState extends State<FichajeScreen> {
       appBar: AppBar(
         title: const Text('Registro de Jornada'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.group),
+            tooltip: 'Ver todos los códigos',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FichajeCodigosScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -68,6 +68,34 @@ class FichajeService {
     }
   }
 
+  /// Obtiene todos los códigos almacenados en la base de datos
+  Future<List<Map<String, dynamic>>> obtenerTodosLosCodigos() async {
+    try {
+      final List<dynamic> response = await _client
+          .from('fichajes_codigos')
+          .select()
+          .order('descripcion', ascending: true, nullsFirst: false);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      Logger.e('Error en obtenerTodosLosCodigos: $e');
+      rethrow;
+    }
+  }
+
+  /// Actualiza la descripción de un código específico
+  Future<void> actualizarDescripcionCodigo(int id, String descripcion) async {
+    try {
+      await _client
+          .from('fichajes_codigos')
+          .update({'descripcion': descripcion})
+          .eq('id', id);
+    } catch (e) {
+      Logger.e('Error actualizando descripción del código: $e');
+      rethrow;
+    }
+  }
+
   /// Obtiene el estado actual del dashboard para determinar qué botones mostrar
   Future<Map<String, dynamic>> getDashboardStatus(String empleadoId) async {
     try {
