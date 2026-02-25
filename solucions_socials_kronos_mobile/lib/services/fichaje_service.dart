@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/logger.dart';
 
@@ -52,24 +53,39 @@ class FichajeService {
 
   /// Registra un nuevo fichaje de entrada
   Future<Map<String, dynamic>> registrarEntrada({
+    required String empleadoId,
     required String userId,
-    String? ubicacion,
+    double? latitud,
+    double? longitud,
+    String? textoUbicacion,
   }) async {
     try {
-      // TODO: Si existe una función RPC en Supabase que centralice la creación,
-      // se puede llamar así:
-      // return await _client.rpc('iniciar_fichaje', params: {
-      //   'p_user_id': userId,
-      //   'p_ubicacion': ubicacion ?? '',
-      // });
+      final String hoy = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+      // 1. Comprobar primero que el empleado no tenga ya un fichaje creado para el día de hoy.
+      final List<dynamic> fichajesHoy = await _client
+          .from('fichajes')
+          .select()
+          .eq('empleado_id', empleadoId)
+          .eq('fecha', hoy)
+          .limit(1);
+
+      if (fichajesHoy.isNotEmpty) {
+        throw Exception('El empleado ya tiene un fichaje registrado hoy.');
+      }
+
+      // 2. Insertar el nuevo registro
       final Map<String, dynamic> response = await _client
           .from('fichajes')
           .insert(<String, dynamic>{
-            'user_id': userId,
-            'entrada': DateTime.now().toUtc().toIso8601String(),
-            'ubicacion': ubicacion,
-            'estado_modificacion': 'original',
+            'empleado_id': empleadoId,
+            'fecha': hoy,
+            'hora_entrada': null, // El trigger de supabase usará now()
+            'created_by': userId,
+            'es_modificado': false,
+            if (latitud != null) 'ubicacion_lat': latitud,
+            if (longitud != null) 'ubicacion_lng': longitud,
+            if (textoUbicacion != null) 'ubicacion_texto': textoUbicacion,
           })
           .select()
           .single();
