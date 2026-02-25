@@ -8,6 +8,7 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/user/user_screen.dart';
 import 'screens/welcome/welcome_screen.dart';
+import 'screens/fichaje/fichaje_screen.dart';
 import 'package:provider/provider.dart';
 import 'theme/theme_controller.dart';
 
@@ -220,6 +221,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _pages = const <Widget>[
     RutaScreen(),
+    FichajeScreen(),
     UserScreen(),
     SettingsScreen(),
   ];
@@ -237,6 +239,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.assignment_outlined),
             selectedIcon: Icon(Icons.assignment),
             label: 'Hoja de Ruta',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.access_time_outlined),
+            selectedIcon: Icon(Icons.access_time),
+            label: 'Fichaje',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
