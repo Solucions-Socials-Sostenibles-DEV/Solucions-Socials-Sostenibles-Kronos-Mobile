@@ -131,7 +131,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
 
     if (_fichajeActual == null) return;
 
-    final entradaStr = _fichajeActual!['entrada'] as String?;
+    final entradaStr = _fichajeActual!['hora_entrada'] as String?;
     if (entradaStr == null) return;
 
     final entrada = DateTime.parse(entradaStr).toLocal();
