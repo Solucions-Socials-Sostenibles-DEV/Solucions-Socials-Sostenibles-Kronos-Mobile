@@ -152,17 +152,38 @@ class FichajeService {
   Future<Map<String, dynamic>> iniciarPausa({
     required String fichajeId,
     required String tipoPausa,
+    String? descripcion,
   }) async {
     try {
-      // TODO: Las pausas también podrían tener su propia función RPC en Supabase:
-      // return await _client.rpc('iniciar_pausa', params: { ... });
+      // 1. Verificar tener un fichaje abierto (sin hora de salida)
+      final List<dynamic> fichajes = await _client
+          .from('fichajes')
+          .select()
+          .eq('id', fichajeId) // O 'fichaje_id' según la BD
+          .limit(1);
 
+      if (fichajes.isEmpty) {
+        throw Exception('El fichaje no existe.');
+      }
+      final Map<String, dynamic> fichaje = fichajes.first as Map<String, dynamic>;
+      if (fichaje['hora_salida'] != null || fichaje['salida'] != null) {
+        throw Exception('No puedes iniciar una pausa en un fichaje ya cerrado.');
+      }
+
+      // 2. Verificar que no haya otra pausa activa
+      final Map<String, dynamic>? pausaActiva = await getActivePausa(fichajeId);
+      if (pausaActiva != null) {
+        throw Exception('Ya tienes una pausa activa, finalízala primero.');
+      }
+
+      // 3. Insertar la nueva pausa en la base de datos
       final Map<String, dynamic> response = await _client
           .from('fichajes_pausas')
           .insert(<String, dynamic>{
             'fichaje_id': fichajeId,
             'tipo': tipoPausa,
-            'inicio': DateTime.now().toUtc().toIso8601String(),
+            'inicio': null, // Usa now() del servidor por trigger
+            if (descripcion != null) 'descripcion': descripcion,
           })
           .select()
           .single();
@@ -175,20 +196,18 @@ class FichajeService {
   }
 
   /// Finaliza una pausa activa
-  Future<Map<String, dynamic>> finalizarPausa({
-    required String pausaId, // Asumo que existe un Identificador primario pausa_id (o 'id')
+  Future<void> finalizarPausa({
+    required String pausaIdActiva,
   }) async {
     try {
-      final Map<String, dynamic> response = await _client
-          .from('fichajes_pausas')
-          .update(<String, dynamic>{
-            'fin': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('pausa_id', pausaId) // o 'id'
-          .select()
-          .single();
+      // Importante: Para mostrar las "horas trabajadas" en tiempo real tras finalizar,
+      // la UI/Provider local tendrá que restar la duración de la pausa al tiempo 
+      // transcurrido. El cálculo oficial se hace al cerrar el fichaje en base de datos.
+      
+      await _client.rpc('finalizar_pausa_fichaje', params: <String, dynamic>{
+        'p_pausa_id': pausaIdActiva,
+      });
 
-      return response;
     } catch (e) {
       Logger.e('Error en finalizarPausa: $e');
       rethrow;
