@@ -9,15 +9,30 @@ import 'screens/settings/settings_screen.dart';
 import 'screens/user/user_screen.dart';
 import 'screens/welcome/welcome_screen.dart';
 import 'screens/fichaje/fichaje_screen.dart';
+import 'screens/obrador/obrador_screen.dart';
 import 'package:provider/provider.dart';
 import 'theme/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: "assets/.env");
+
+  final String supabaseUrl = SupabaseConfig.url.trim();
+  final String supabaseAnonKey = SupabaseConfig.anonKey.trim();
+  final bool supabaseConfigured =
+      supabaseUrl.startsWith('https://') &&
+      !supabaseUrl.contains('tu-proyecto') &&
+      supabaseAnonKey.isNotEmpty &&
+      !supabaseAnonKey.contains('TU_ANON_KEY');
+
+  if (!supabaseConfigured) {
+    runApp(const ConfigurationRequiredApp());
+    return;
+  }
+
   await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
   runApp(
     ChangeNotifierProvider<ThemeController>(
@@ -222,6 +237,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _pages = const <Widget>[
     RutaScreen(),
     FichajeScreen(),
+    ObradorScreen(),
     UserScreen(),
     SettingsScreen(),
   ];
@@ -246,6 +262,11 @@ class _MainShellState extends State<MainShell> {
             label: 'Fichaje',
           ),
           NavigationDestination(
+            icon: Icon(Icons.factory_outlined),
+            selectedIcon: Icon(Icons.factory),
+            label: 'Obrador',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Usuario',
@@ -256,6 +277,52 @@ class _MainShellState extends State<MainShell> {
             label: 'Ajustes',
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Pantalla informativa para que la app pueda arrancar incluso si faltan
+/// las credenciales reales de Supabase en assets/.env.
+class ConfigurationRequiredApp extends StatelessWidget {
+  const ConfigurationRequiredApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Configuración de Kronos',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4CAF51)),
+        useMaterial3: true,
+      ),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Configuración necesaria')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cloud_off_outlined, size: 56),
+                SizedBox(height: 16),
+                Text(
+                  'Configura Supabase para usar Kronos',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Edita assets/.env y sustituye SUPABASE_URL y '
+                  'SUPABASE_ANON_KEY por los valores reales de tu proyecto '
+                  'Supabase. Después vuelve a ejecutar flutter run.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

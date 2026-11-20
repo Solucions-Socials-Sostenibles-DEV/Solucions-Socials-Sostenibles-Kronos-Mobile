@@ -50,6 +50,12 @@ dependencies:
   # Selección de archivos (opcional, para futuras funcionalidades)
   file_picker: ^8.0.0
 
+  # Exportación para inspecciones del obrador
+  pdf: ^3.11.3
+
+  # Etiquetas QR de trazabilidad de lotes
+  qr_flutter: ^4.1.0
+
   # HTTP para comprobaciones de servicios externos
   http: ^1.2.2
 
@@ -86,7 +92,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - .env
+    - assets/.env
     - assets/images/
     - assets/icons/
     # - assets/lottie/
